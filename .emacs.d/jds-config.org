@@ -527,9 +527,9 @@ This lets me open up terminals. I wish I could get this to work with tramp.
   (switch-to-buffer term-ansi-buffer-name))
 
 (use-package pcomplete
-  :init (defun my/ssh-remote-term (hostname)
+  :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
   (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
-  (my/remote-term hostname "ssh" hostname)))
+  (my/remote-term hostname "ssh" hostname))))
 
 (defun helm-source-ssh-remote-term ()
   (helm-build-sync-source "SSH hostname"
