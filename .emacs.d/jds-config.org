@@ -865,7 +865,7 @@ I don't want to get distracted by the same code in the other window, so I want o
 
 *** Never use tabs
 #+begin_src emacs-lisp :tangle yes
-    (setq-default tabs-indent-mode nil)
+    (setq-default indent-tabs-mode nil)
 #+end_src
 
 *** Compilation
