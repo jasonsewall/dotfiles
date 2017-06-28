@@ -1,0 +1,14 @@
+[user]
+	name = Jason Sewall
+	email = jason.sewall@intel.com
+[push]
+	default = matching
+[color]
+        diff = auto
+        status = auto
+        branch = auto
+	interactive = auto
+[clean]
+	requireForce = true
+[rerere]
+	enabled = true
