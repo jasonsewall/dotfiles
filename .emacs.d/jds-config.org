@@ -493,6 +493,13 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
         try-complete-lisp-symbol))
 #+END_SRC
 
+*** Powerline
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package powerline
+  :config (powerline-default-theme))
+#+END_SRC
+
 ** System stuff
 *** Tramp
 Real handy when working on remote machines
