@@ -1,0 +1,11 @@
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+export TEXROOT=/nfs/home/jsewall/local/texlive/2016
+
+export INFOPATH=$INFOPATH:/usr/share/info:$TEXROOT/texmf-dist/doc/info
+export MANPATH=$MANPATH:/usr/share/man
+export MANPATH=$MANPATH:$TEXROOT/texmf-dist/doc/man
+
+export PATH=$TEXROOT/bin/x86_64-linux:/nfs/home/jsewall/local/bin:$PATH
+export LD_LIBRARY_PATH=/nfs/home/jsewall/local/lib64:$LD_LIBRARY_PATH
+
+source $HOME/.bashrc.local

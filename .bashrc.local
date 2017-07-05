@@ -1,0 +1,22 @@
+# .bashrc -*- mode: sh; -*-
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+fi
+
+# User specific aliases and functions
+
+alias rm~='rm *~'
+export EDITOR=emacsclient
+
+export AUTOMAKE_JOBS=4
+
+shopt -s histappend
+
+export PROMPT_COMMAND="history -a; history -n"
+
+source ~/.git-completion.bash
+source ~/.git-prompt.sh
+export GIT_PS1_SHOWDIRTYSTATE=1
+PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
