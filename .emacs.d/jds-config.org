@@ -131,6 +131,14 @@ Keybinding craziness
 (use-package flycheck
   :init (add-hook 'after-init-hook #'global-flycheck-mode))
 #+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package flycheck-clang-analyzer
+  :ensure t
+  :after flycheck
+  :config (flycheck-clang-analyzer-setup))
+#+END_SRC
+
 *** Key-chord
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package key-chord

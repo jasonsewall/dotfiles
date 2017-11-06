@@ -35,6 +35,11 @@
 (use-package flycheck
   :init (add-hook 'after-init-hook #'global-flycheck-mode))
 
+(use-package flycheck-clang-analyzer
+  :ensure t
+  :after flycheck
+  :config (flycheck-clang-analyzer-setup))
+
 (use-package key-chord
   :init (key-chord-mode 1))
 
