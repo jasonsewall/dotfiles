@@ -761,7 +761,8 @@ So powerful
 #+end_src
 *** Autocomplete
 #+begin_src emacs-lisp :tangle yes
-(use-package company)
+(use-package company
+:config (global-company-mode))
 #+end_src
 *** Crosshairs
 #+begin_src emacs-lisp :tangle yes
@@ -992,37 +993,6 @@ New modern C setup!
 
 (add-hook 'c-mode-hook '(lambda ()
 			 (key-chord-define c++-mode-map ";;" "\C-e;")))
-#+end_src
-*** Rtags
-	If we ditch this, we need to remember to move global-company-mode
-	elsewhere
-#+begin_src emacs-lisp :tangle yes
-    (use-package rtags
-      :config (progn
-                (setq rtags-path "/home/jsewall/local/bin")
-                (rtags-start-process-unless-running)
-                (setq rtags-autostart-diagnostics t)
-                (rtags-diagnostics)
-                (setq rtags-diagnostics-enabled t)
-                (push 'company-rtags company-backends)
-                (global-company-mode))
-      :bind (("<backtab>" . company-complete)))
-     (use-package helm-rtags
-       :config (setq rtags-use-helm t))
-
-  (use-package flycheck-rtags
-    :config (progn
-              (defun my-flycheck-rtags-setup ()
-                (flycheck-select-checker 'rtags)
-                (setq-local flycheck-highlighting-mode nil) ;; RTags creates more accurate overlays.
-                (setq-local flycheck-check-syntax-automatically nil))
-              (add-hook 'c-mode-hook #'my-flycheck-rtags-setup)
-              (add-hook 'c++-mode-hook #'my-flycheck-rtags-setup)))
-#+end_src
-*** Cmake-ide
-#+begin_src emacs-lisp :tangle yes
-(use-package cmake-ide
-   :config (cmake-ide-setup))
 #+end_src
 
 * Back Matter

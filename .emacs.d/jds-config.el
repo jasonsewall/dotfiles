@@ -461,7 +461,8 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :bind (("M-2" . er/expand-region)))
 
-(use-package company)
+(use-package company
+:config (global-company-mode))
 
 (use-package crosshairs
 :init (progn
@@ -615,32 +616,7 @@ _k_: previous error    _l_: last error
                (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (add-hook 'c-mode-hook '(lambda ()
-             (key-chord-define c++-mode-map ";;" "\C-e;")))
-
-(use-package rtags
-    :config (progn
-              (setq rtags-path "/home/jsewall/local/bin")
-              (rtags-start-process-unless-running)
-              (setq rtags-autostart-diagnostics t)
-              (rtags-diagnostics)
-              (setq rtags-diagnostics-enabled t)
-              (push 'company-rtags company-backends)
-              (global-company-mode))
-    :bind (("<backtab>" . company-complete)))
-   (use-package helm-rtags
-     :config (setq rtags-use-helm t))
-
-(use-package flycheck-rtags
-  :config (progn
-            (defun my-flycheck-rtags-setup ()
-              (flycheck-select-checker 'rtags)
-              (setq-local flycheck-highlighting-mode nil) ;; RTags creates more accurate overlays.
-              (setq-local flycheck-check-syntax-automatically nil))
-            (add-hook 'c-mode-hook #'my-flycheck-rtags-setup)
-            (add-hook 'c++-mode-hook #'my-flycheck-rtags-setup)))
-
-(use-package cmake-ide
-   :config (cmake-ide-setup))
+			 (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (provide 'dot-emacs)
 ;;; dot-emacs ends here
