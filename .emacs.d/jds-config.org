@@ -943,6 +943,12 @@ _k_: previous error    _l_: last error
                   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 #+end_src
 *** Common Lisp
+#+begin_src emacs-lisp :tangle yes
+(use-package slime
+   :ensure t
+   :config (setq slime-contribs '(slime-fancy)
+                 inferior-lisp-program "/usr/bin/sbcl"))
+#+end_src
 *** Elisp
 #+begin_src emacs-lisp :tangle yes
 (defun my/eval-and-replace ()

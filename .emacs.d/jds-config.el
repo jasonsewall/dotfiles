@@ -579,6 +579,11 @@ _k_: previous error    _l_: last error
    :config (progn (setq TeX-PDF-mode t)
                   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 
+(use-package slime
+   :ensure t
+   :config (setq slime-contribs '(slime-fancy)
+                 inferior-lisp-program "/usr/bin/sbcl"))
+
 (defun my/eval-and-replace ()
   "Replace the preceding sexp with its value."
   (interactive)
