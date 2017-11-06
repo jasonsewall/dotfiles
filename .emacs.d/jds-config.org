@@ -958,6 +958,10 @@ _k_: previous error    _l_: last error
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 #+end_src
 *** Python
+#+begin_src emacs-lisp :tangle yes
+(setq python-python-command "/nfs/home/jsewall/local/bin/python3")
+(setq python-shell-interpreter "/nfs/home/jsewall/local/bin/python3")
+#+end_src
 *** Fortran
 	#+begin_src emacs-lisp :tangle yes
 	(setq fortran-comment-region "!"

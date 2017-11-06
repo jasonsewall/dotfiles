@@ -591,6 +591,9 @@ _k_: previous error    _l_: last error
 
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 
+(setq python-python-command "/nfs/home/jsewall/local/bin/python3")
+(setq python-shell-interpreter "/nfs/home/jsewall/local/bin/python3")
+
 (setq fortran-comment-region "!"
       fortran-line-length 200)
 
