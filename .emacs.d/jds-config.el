@@ -328,6 +328,13 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (setq vc-follow-symlinks t)
 
+(add-to-list 'tramp-methods
+    '("yadm"
+     (tramp-login-program "yadm")
+     (tramp-login-args (("enter")))
+     (tramp-remote-shell "/bin/sh")
+     (tramp-remote-shell-args ("-c"))))
+
 (setq diff-switches "-u")
 (setq vc-diff-switches '("-b" "-B" "-u"))
 (setq vc-git-diff-switches nil)
