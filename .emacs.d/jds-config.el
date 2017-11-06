@@ -234,7 +234,7 @@ _SPC_ cancel    _o_nly this     _d_elete
 (setq-default buffer-file-coding-system 'utf-8-unix)
 (set-default-coding-systems 'utf-8-unix)
 (setq-default default-buffer-file-coding-system 'utf-8-unix)
-
+(define-coding-system-alias 'UTF-8 'utf-8)
 (setq read-quoted-char-radix 16)
 
 (defmacro my/insert-unicode (unicode-name)
