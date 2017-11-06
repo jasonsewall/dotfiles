@@ -162,6 +162,7 @@ _SPC_ cancel    _o_nly this     _d_elete
   :init
   (progn
     (require 'helm-config)
+    (require 'helm-adaptive)
     (setq helm-candidate-number-limit 100)
     ;; From https://gist.github.com/antifuchs/9238468
     (setq helm-idle-delay 0.0 ; update fast sources immediately (doesn't).
