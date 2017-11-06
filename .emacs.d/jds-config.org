@@ -975,6 +975,10 @@ _k_: previous error    _l_: last error
   :init (progn
          (add-hook 'markdown-mode-hook 'pandoc-mode)))
 #+end_src
+*** Guess mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package guess-style)
+#+END_SRC
 *** C programming
 
 New modern C setup!

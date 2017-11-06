@@ -603,6 +603,8 @@ _k_: previous error    _l_: last error
   :init (progn
          (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
+(use-package guess-style)
+
 (setq c-default-style "bsd"
       c-basic-offset 4
       indent-tabs-mode nil)
