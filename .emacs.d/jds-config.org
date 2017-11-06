@@ -516,6 +516,10 @@ Real handy when working on remote machines
 (use-package tramp
   :init (setq tramp-unified-filename t))
 #+end_src
+**** Tramp-term
+#+begin_src emacs-lisp :tangle yes
+(use-package tramp-term)
+#+end_src
 *** Shells
 **** Remote term access
 

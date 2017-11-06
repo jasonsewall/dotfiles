@@ -271,6 +271,8 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package tramp
   :init (setq tramp-unified-filename t))
 
+(use-package tramp-term)
+
 (add-hook 'term-mode-hook
       (lambda ()
         (setq term-buffer-maximum-size 100000)))
