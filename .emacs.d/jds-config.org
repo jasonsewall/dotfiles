@@ -72,7 +72,7 @@ Who I am
 
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq user-full-name "Jason Sewall"
-      user-mail-address "jason.sewall@intel.com")
+      user-mail-address "jasewall@nvidia.com")
 #+END_SRC
 
 Where I live
@@ -144,12 +144,6 @@ Keybinding craziness
 (use-package key-chord
   :init (key-chord-mode 1))
 #+END_SRC
-
-*** Unbound
-Help find out what keys I can use
-#+begin_src emacs-lisp :tangle yes
-(use-package unbound)
-#+end_src
 
 *** Libraries
 
@@ -652,21 +646,12 @@ I don't know if this is actually necessary
   ("m" set-mark-command "mark" :bind nil)
   ("q" nil "quit"))
 #+end_src
-*** Go to char
-iy go to char is nice with multiple cursors
-#+begin_src emacs-lisp :tangle yes
-(use-package iy-go-to-char
-   :bind (("M-i" . back-to-indentation)
-          ("M-m" . iy-go-to-char)
-          ("M-M" . iy-go-to-char-backward))
-   :init (progn (key-chord-define-global "fg" 'iy-go-to-char)
-                (key-chord-define-global "fd" 'iy-go-to-char-backward)))
-#+end_src
 *** Lacarte
 Navigate menus via keyboard
 
 #+begin_src emacs-lisp :tangle yes
 (use-package lacarte
+ :ensure nil
  :bind (("<f10>" . lacarte-execute-menu-command)))
 #+end_src
 
@@ -674,6 +659,7 @@ Navigate menus via keyboard
 Use arrow keys to switch windows (and frames, with X)
 #+begin_src emacs-lisp :tangle yes
 (use-package windmove
+  :ensure nil
   :init (windmove-default-keybindings))
 (use-package framemove
   :init (setq framemove-hook-into-windmove t))
@@ -766,10 +752,11 @@ So powerful
 #+end_src
 *** Crosshairs
 #+begin_src emacs-lisp :tangle yes
-    (use-package crosshairs
+  (use-package crosshairs
+    :ensure nil
     :init (progn
-    (setq col-highlight-vline-face-flag t)
-    (set-face-attribute 'col-highlight () :background () :inherit 'highlight))
+            (setq col-highlight-vline-face-flag t)
+            (set-face-attribute 'col-highlight () :background () :inherit 'highlight))
     :bind (("C-+" . crosshairs-mode)))
 #+end_src
 *** Transpose, but keep whitespace
@@ -965,8 +952,8 @@ _k_: previous error    _l_: last error
 #+end_src
 *** Python
 #+begin_src emacs-lisp :tangle yes
-(setq python-python-command "/nfs/home/jsewall/local/bin/python3")
-(setq python-shell-interpreter "/nfs/home/jsewall/local/bin/python3")
+(setq python-python-command "python3")
+(setq python-shell-interpreter "python3")
 #+end_src
 *** Fortran
 	#+begin_src emacs-lisp :tangle yes
@@ -981,10 +968,6 @@ _k_: previous error    _l_: last error
   :init (progn
          (add-hook 'markdown-mode-hook 'pandoc-mode)))
 #+end_src
-*** Guess mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package guess-style)
-#+END_SRC
 *** C programming
 
 New modern C setup!

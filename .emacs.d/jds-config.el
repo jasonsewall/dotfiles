@@ -1,4 +1,3 @@
-
 (package-initialize)
 (add-to-list 'load-path "~/local/share/emacs/site-lisp")
 (setq package-enable-at-startup nil)
@@ -8,7 +7,7 @@
 (setq inhibit-startup-message t)
 
 (setq user-full-name "Jason Sewall"
-      user-mail-address "jason.sewall@intel.com")
+      user-mail-address "jasewall@nvidia.com")
 
 (setq calendar-latitude 43.8951048
       calendar-longitude -69.525429740
@@ -42,8 +41,6 @@
 
 (use-package key-chord
   :init (key-chord-mode 1))
-
-(use-package unbound)
 
 (use-package dash)
 
@@ -120,40 +117,40 @@ _SPC_ cancel    _o_nly this     _d_elete
      ("f" helm-find-files)
      ("F" follow-mode)
      ("a" (lambda ()
-        (interactive)
-        (ace-window 1)
-        (add-hook 'ace-window-end-once-hook
-              'hydra-window/body))
-      )
+	    (interactive)
+	    (ace-window 1)
+	    (add-hook 'ace-window-end-once-hook
+		      'hydra-window/body))
+	  )
      ("v" (lambda ()
-        (interactive)
-        (split-window-right)
-        (windmove-right))
-      )
+	    (interactive)
+	    (split-window-right)
+	    (windmove-right))
+	  )
      ("x" (lambda ()
-        (interactive)
-        (split-window-below)
-        (windmove-down))
-      )
+	    (interactive)
+	    (split-window-below)
+	    (windmove-down))
+	  )
      ("s" (lambda ()
-        (interactive)
-        (ace-window 4)
-        (add-hook 'ace-window-end-once-hook
-              'hydra-window/body)))
+	    (interactive)
+	    (ace-window 4)
+	    (add-hook 'ace-window-end-once-hook
+		      'hydra-window/body)))
      ("S" save-buffer)
      ("d" delete-window)
      ("D" (lambda ()
-        (interactive)
-        (ace-window 16)
-        (add-hook 'ace-window-end-once-hook
-              'hydra-window/body))
-      )
+	    (interactive)
+	    (ace-window 16)
+	    (add-hook 'ace-window-end-once-hook
+		      'hydra-window/body))
+	  )
      ("o" delete-other-windows)
      ("i" ace-maximize-window)
      ("z" (progn
-        (winner-undo)
-        (setq this-command 'winner-undo))
-      )
+	    (winner-undo)
+	    (setq this-command 'winner-undo))
+	  )
      ("Z" winner-redo)
      ("SPC" nil))
 
@@ -274,8 +271,8 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package tramp-term)
 
 (add-hook 'term-mode-hook
-      (lambda ()
-        (setq term-buffer-maximum-size 100000)))
+	  (lambda ()
+	    (setq term-buffer-maximum-size 100000)))
 
 ;; Use this for remote so I can specify command line arguments
 (defun my/remote-term (new-buffer-name cmd &rest switches)
@@ -300,15 +297,15 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (defun helm-source-ssh-remote-term ()
   (helm-build-sync-source "SSH hostname"
-              :candidates (lambda () (pcmpl-ssh-hosts))
-              :filtered-candidate-transformer '(helm-adaptive-sort)
-              :nomark t
-              :action '(("Select host" . my/ssh-remote-term))))
+			  :candidates (lambda () (pcmpl-ssh-hosts))
+			  :filtered-candidate-transformer '(helm-adaptive-sort)
+			  :nomark t
+			  :action '(("Select host" . my/ssh-remote-term))))
 
 (defun my/helm-ssh-remote-term ()
   (interactive)
   (helm :sources (helm-source-ssh-remote-term)
-    :buffer "*helm-ssh-remote-term*"))
+	:buffer "*helm-ssh-remote-term*"))
 
 (defun my/local-term ()
   (interactive)
@@ -370,24 +367,19 @@ _SPC_ cancel    _o_nly this     _d_elete
   :bind (("M-g g" . avy-goto-line)))
 
 (defhydra hydra-goto-line (goto-map ""
-                    :pre (linum-mode 1)
-                    :post (linum-mode -1))
+				    :pre (linum-mode 1)
+				    :post (linum-mode -1))
   "goto-line"
   ("g" goto-line "go")
   ("m" set-mark-command "mark" :bind nil)
   ("q" nil "quit"))
 
-(use-package iy-go-to-char
-   :bind (("M-i" . back-to-indentation)
-          ("M-m" . iy-go-to-char)
-          ("M-M" . iy-go-to-char-backward))
-   :init (progn (key-chord-define-global "fg" 'iy-go-to-char)
-                (key-chord-define-global "fd" 'iy-go-to-char-backward)))
-
 (use-package lacarte
+ :ensure nil
  :bind (("<f10>" . lacarte-execute-menu-command)))
 
 (use-package windmove
+  :ensure nil
   :init (windmove-default-keybindings))
 (use-package framemove
   :init (setq framemove-hook-into-windmove t))
@@ -465,10 +457,11 @@ point reaches the beginning or end of the buffer, stop there."
 :config (global-company-mode))
 
 (use-package crosshairs
-:init (progn
-(setq col-highlight-vline-face-flag t)
-(set-face-attribute 'col-highlight () :background () :inherit 'highlight))
-:bind (("C-+" . crosshairs-mode)))
+  :ensure nil
+  :init (progn
+          (setq col-highlight-vline-face-flag t)
+          (set-face-attribute 'col-highlight () :background () :inherit 'highlight))
+  :bind (("C-+" . crosshairs-mode)))
 
 (defun my/forward-transpose-whitespace (begin end)
   "If mark is active, swap leading whitespace with region between
@@ -480,14 +473,14 @@ point reaches the beginning or end of the buffer, stop there."
   (let* ((string-to-be-switched
           (if (use-region-p)
               (delete-and-extract-region begin end)
-          (progn
-        (skip-chars-forward "[:space:]")
-        (delete-and-extract-region (point) (1+ (point))))))
+	      (progn
+		(skip-chars-forward "[:space:]")
+		(delete-and-extract-region (point) (1+ (point))))))
          (right-anchor (point))
          (whitespace
-      (progn
-        (skip-chars-backward "[:space:]")
-        (delete-and-extract-region (point) right-anchor))))
+	  (progn
+	    (skip-chars-backward "[:space:]")
+	    (delete-and-extract-region (point) right-anchor))))
     (insert string-to-be-switched whitespace)))
 
 (global-set-key (kbd "C-c t") 'my/forward-transpose-whitespace)
@@ -568,10 +561,10 @@ _k_: previous error    _l_: last error
       ("k" previous-error nil :bind nil)
       ("h" first-error    nil :bind nil)
       ("l" (condition-case err
-           (while t
-         (next-error))
-         (user-error nil))
-       nil :bind nil)
+	       (while t
+		 (next-error))
+	     (user-error nil))
+	   nil :bind nil)
       ("q" nil            nil :color blue))
 
 (use-package auctex
@@ -596,19 +589,17 @@ _k_: previous error    _l_: last error
 
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 
-(setq python-python-command "/nfs/home/jsewall/local/bin/python3")
-(setq python-shell-interpreter "/nfs/home/jsewall/local/bin/python3")
+(setq python-python-command "python3")
+(setq python-shell-interpreter "python3")
 
 (setq fortran-comment-region "!"
-      fortran-line-length 200)
+	  fortran-line-length 200)
 
 (use-package pandoc-mode)
 (use-package markdown-mode
   :ensure t
   :init (progn
          (add-hook 'markdown-mode-hook 'pandoc-mode)))
-
-(use-package guess-style)
 
 (setq c-default-style "bsd"
       c-basic-offset 4
@@ -617,13 +608,13 @@ _k_: previous error    _l_: last error
 (c-set-offset 'cpp-macro 0 nil)
 
 (add-hook 'c++-mode-hook '(lambda ()
-               (define-key c++-mode-map "\C-cf" 'align-current)))
+			   (define-key c++-mode-map "\C-cf" 'align-current)))
 
 (add-hook 'c-mode-hook '(lambda ()
-             (define-key c-mode-map "\C-cf" 'align-current)))
+			 (define-key c-mode-map "\C-cf" 'align-current)))
 
 (add-hook 'c++-mode-hook '(lambda ()
-               (key-chord-define c++-mode-map ";;" "\C-e;")))
+			   (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (add-hook 'c-mode-hook '(lambda ()
 			 (key-chord-define c++-mode-map ";;" "\C-e;")))
