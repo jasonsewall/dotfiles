@@ -340,6 +340,15 @@ _SPC_ cancel    _o_nly this     _d_elete
   :init (setq magit-auto-revert-mode t)
   :bind (("C-x C-g" . magit-status)))
 
+(require 'tramp)
+(add-to-list 'tramp-methods
+ '("yadm"
+   (tramp-login-program "yadm")
+   (tramp-login-args (("enter")))
+   (tramp-login-env (("SHELL") ("/bin/sh")))
+   (tramp-remote-shell "/bin/sh")
+   (tramp-remote-shell-args ("-c"))))
+
 (use-package projectile
   :diminish projectile-mode
   :config
