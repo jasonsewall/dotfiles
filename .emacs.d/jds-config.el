@@ -391,6 +391,7 @@ _SPC_ cancel    _o_nly this     _d_elete
   :ensure nil
   :init (windmove-default-keybindings))
 (use-package framemove
+  :ensure nil
   :init (setq framemove-hook-into-windmove t))
 (global-set-key "\M-o" 'other-window)
 
@@ -464,13 +465,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package company
 :config (global-company-mode))
-
-(use-package crosshairs
-  :ensure nil
-  :init (progn
-          (setq col-highlight-vline-face-flag t)
-          (set-face-attribute 'col-highlight () :background () :inherit 'highlight))
-  :bind (("C-+" . crosshairs-mode)))
 
 (defun my/forward-transpose-whitespace (begin end)
   "If mark is active, swap leading whitespace with region between

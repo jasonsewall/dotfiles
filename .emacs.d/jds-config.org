@@ -669,12 +669,13 @@ Navigate menus via keyboard
 *** Window movement
 Use arrow keys to switch windows (and frames, with X)
 #+begin_src emacs-lisp :tangle yes
-(use-package windmove
-  :ensure nil
-  :init (windmove-default-keybindings))
-(use-package framemove
-  :init (setq framemove-hook-into-windmove t))
-(global-set-key "\M-o" 'other-window)
+  (use-package windmove
+    :ensure nil
+    :init (windmove-default-keybindings))
+  (use-package framemove
+    :ensure nil
+    :init (setq framemove-hook-into-windmove t))
+  (global-set-key "\M-o" 'other-window)
 #+end_src
 *** Move to start
 #+begin_src emacs-lisp :tangle yes
@@ -760,15 +761,6 @@ So powerful
 #+begin_src emacs-lisp :tangle yes
 (use-package company
 :config (global-company-mode))
-#+end_src
-*** Crosshairs
-#+begin_src emacs-lisp :tangle yes
-  (use-package crosshairs
-    :ensure nil
-    :init (progn
-            (setq col-highlight-vline-face-flag t)
-            (set-face-attribute 'col-highlight () :background () :inherit 'highlight))
-    :bind (("C-+" . crosshairs-mode)))
 #+end_src
 *** Transpose, but keep whitespace
 #+begin_src emacs-lisp :tangle yes
