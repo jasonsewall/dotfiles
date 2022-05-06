@@ -709,10 +709,7 @@ point reaches the beginning or end of the buffer, stop there."
 ** Editing tricks
 *** Aggresive indentation
 #+begin_src emacs-lisp :tangle yes
-(use-package aggressive-indent
-  :config (progn
-             (global-aggressive-indent-mode 1)
-             (add-to-list 'aggressive-indent-excluded-modes 'python-mode)))
+(use-package aggressive-indent)
 #+end_src
 
 *** Multiple cursors

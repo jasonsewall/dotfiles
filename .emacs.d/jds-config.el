@@ -422,10 +422,7 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key [remap move-beginning-of-line]
                 'my/smarter-move-beginning-of-line)
 
-(use-package aggressive-indent
-  :config (progn
-             (global-aggressive-indent-mode 1)
-             (add-to-list 'aggressive-indent-excluded-modes 'python-mode)))
+(use-package aggressive-indent)
 
 (use-package multiple-cursors
   :init (defhydra multiple-cursors-hydra (global-map "C-x m")
