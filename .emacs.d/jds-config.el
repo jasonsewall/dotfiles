@@ -521,6 +521,24 @@ point reaches the beginning or end of the buffer, stop there."
     (setq undo-tree-visualizer-timestamps t)
     (setq undo-tree-visualizer-diff t)))
 
+(use-package lsp-mode
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :hook ((c++-mode . lsp)
+         (python-mode . lsp)
+         (c-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+(use-package lsp-ui :commands lsp-ui-mode)
+(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+
+(use-package tree-sitter
+  :init
+  (global-tree-sitter-mode))
+(use-package tree-sitter-langs)
+
 (setq org-src-window-setup 'current-window)
 
 (defun my/copy-code-as-org-block-and-gist (beg end)

@@ -850,6 +850,29 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 #+END_SRC
 
 ** Editing modes
+*** Semantic support
+**** lsp-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package lsp-mode
+    :init
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    (setq lsp-keymap-prefix "C-c l")
+    :hook ((c++-mode . lsp)
+           (python-mode . lsp)
+           (c-mode . lsp)
+           ;; if you want which-key integration
+           (lsp-mode . lsp-enable-which-key-integration))
+    :commands lsp)
+  (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+#+END_SRC
+*** Tree-sitter
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package tree-sitter
+    :init
+    (global-tree-sitter-mode))
+  (use-package tree-sitter-langs)
+#+END_SRC
 *** Literate programming
 **** Editing source code
 I don't want to get distracted by the same code in the other window, so I want org src to use the current window.
