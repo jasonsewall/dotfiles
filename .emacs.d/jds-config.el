@@ -536,7 +536,7 @@ point reaches the beginning or end of the buffer, stop there."
              (replace-regexp-in-string "-mode$" "" mode)
              contents))))
 
-(setq-default tab-width 4)
+(setq-default tab-width 2)
 
 (setq-default indent-tabs-mode nil)
 
@@ -602,7 +602,7 @@ _k_: previous error    _l_: last error
          (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
 (setq c-default-style "bsd"
-      c-basic-offset 4
+      c-basic-offset 2
       indent-tabs-mode nil)
 
 (c-set-offset 'cpp-macro 0 nil)
