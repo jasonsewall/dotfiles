@@ -1,5 +1,5 @@
 (package-initialize)
-(add-to-list 'load-path "~/local/share/emacs/site-lisp")
+(add-to-list 'load-path "~/local/share/emacs/site-packages")
 (setq package-enable-at-startup nil)
 
 (server-start)
