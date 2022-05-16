@@ -707,6 +707,17 @@ point reaches the beginning or end of the buffer, stop there."
                 'my/smarter-move-beginning-of-line)
 #+end_src
 ** Editing tricks
+*** Yasnippet
+#+begin_src emacs-lisp :tangle yes
+  (use-package yasnippet
+    :init (yas-global-mode 1))
+#+end_src
+
+*** Which Key
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key)
+#+end_src
+
 *** Aggresive indentation
 #+begin_src emacs-lisp :tangle yes
 (use-package aggressive-indent)

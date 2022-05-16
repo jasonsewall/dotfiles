@@ -422,6 +422,11 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key [remap move-beginning-of-line]
                 'my/smarter-move-beginning-of-line)
 
+(use-package yasnippet
+  :init (yas-global-mode 1))
+
+(use-package which-key)
+
 (use-package aggressive-indent)
 
 (use-package multiple-cursors
