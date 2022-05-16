@@ -91,11 +91,11 @@
 (setq frame-title-format
       (concat  "emacs@" (system-name)))
 (unless window-system
-    (send-string-to-terminal (concat "\ek" frame-title-format "\e\\")))
+  (send-string-to-terminal (concat "\ek" frame-title-format "\e\\")))
 
 (use-package ace-window)
 (defhydra hydra-window (global-map "C-x w")
-     "
+  "
 Movement^^        ^Split^         ^Switch^      ^Resize^
 ----------------------------------------------------------------
 _h_ ←         _v_ertical      _b_uffer        _q_ X←
@@ -105,54 +105,54 @@ _l_ →         _Z_ reset       _s_wap      _r_ X→
 _F_ollow        _D_lt Other     _S_ave      max_i_mize
 _SPC_ cancel    _o_nly this     _d_elete
 "
-     ("h" windmove-left )
-     ("j" windmove-down )
-     ("k" windmove-up )
-     ("l" windmove-right )
-     ("q" hydra-move-splitter-left)
-     ("w" hydra-move-splitter-down)
-     ("e" hydra-move-splitter-up)
-     ("r" hydra-move-splitter-right)
-     ("b" helm-mini)
-     ("f" helm-find-files)
-     ("F" follow-mode)
-     ("a" (lambda ()
-	    (interactive)
-	    (ace-window 1)
-	    (add-hook 'ace-window-end-once-hook
-		      'hydra-window/body))
-	  )
-     ("v" (lambda ()
-	    (interactive)
-	    (split-window-right)
-	    (windmove-right))
-	  )
-     ("x" (lambda ()
-	    (interactive)
-	    (split-window-below)
-	    (windmove-down))
-	  )
-     ("s" (lambda ()
-	    (interactive)
-	    (ace-window 4)
-	    (add-hook 'ace-window-end-once-hook
-		      'hydra-window/body)))
-     ("S" save-buffer)
-     ("d" delete-window)
-     ("D" (lambda ()
-	    (interactive)
-	    (ace-window 16)
-	    (add-hook 'ace-window-end-once-hook
-		      'hydra-window/body))
-	  )
-     ("o" delete-other-windows)
-     ("i" ace-maximize-window)
-     ("z" (progn
-	    (winner-undo)
-	    (setq this-command 'winner-undo))
-	  )
-     ("Z" winner-redo)
-     ("SPC" nil))
+  ("h" windmove-left )
+  ("j" windmove-down )
+  ("k" windmove-up )
+  ("l" windmove-right )
+  ("q" hydra-move-splitter-left)
+  ("w" hydra-move-splitter-down)
+  ("e" hydra-move-splitter-up)
+  ("r" hydra-move-splitter-right)
+  ("b" helm-mini)
+  ("f" helm-find-files)
+  ("F" follow-mode)
+  ("a" (lambda ()
+         (interactive)
+         (ace-window 1)
+         (add-hook 'ace-window-end-once-hook
+                   'hydra-window/body))
+   )
+  ("v" (lambda ()
+         (interactive)
+         (split-window-right)
+         (windmove-right))
+   )
+  ("x" (lambda ()
+         (interactive)
+         (split-window-below)
+         (windmove-down))
+   )
+  ("s" (lambda ()
+         (interactive)
+         (ace-window 4)
+         (add-hook 'ace-window-end-once-hook
+                   'hydra-window/body)))
+  ("S" save-buffer)
+  ("d" delete-window)
+  ("D" (lambda ()
+         (interactive)
+         (ace-window 16)
+         (add-hook 'ace-window-end-once-hook
+                   'hydra-window/body))
+   )
+  ("o" delete-other-windows)
+  ("i" ace-maximize-window)
+  ("z" (progn
+         (winner-undo)
+         (setq this-command 'winner-undo))
+   )
+  ("Z" winner-redo)
+  ("SPC" nil))
 
 (use-package helm
   :diminish helm-mode
@@ -225,8 +225,8 @@ _SPC_ cancel    _o_nly this     _d_elete
   :diminish guide-key-mode
   :config
   (progn
-  (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-c"))
-  (guide-key-mode 1)))  ; Enable guide-key-mode
+    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-c"))
+    (guide-key-mode 1)))  ; Enable guide-key-mode
 
 (prefer-coding-system 'utf-8)
 (setq-default buffer-file-coding-system 'utf-8-unix)
@@ -271,8 +271,8 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package tramp-term)
 
 (add-hook 'term-mode-hook
-	  (lambda ()
-	    (setq term-buffer-maximum-size 100000)))
+          (lambda ()
+            (setq term-buffer-maximum-size 100000)))
 
 ;; Use this for remote so I can specify command line arguments
 (defun my/remote-term (new-buffer-name cmd &rest switches)
@@ -292,20 +292,20 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (use-package pcomplete
   :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
-  (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
-  (my/remote-term hostname "ssh" hostname))))
+                                       (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
+                                       (my/remote-term hostname "ssh" hostname))))
 
 (defun helm-source-ssh-remote-term ()
   (helm-build-sync-source "SSH hostname"
-			  :candidates (lambda () (pcmpl-ssh-hosts))
-			  :filtered-candidate-transformer '(helm-adaptive-sort)
-			  :nomark t
-			  :action '(("Select host" . my/ssh-remote-term))))
+    :candidates (lambda () (pcmpl-ssh-hosts))
+    :filtered-candidate-transformer '(helm-adaptive-sort)
+    :nomark t
+    :action '(("Select host" . my/ssh-remote-term))))
 
 (defun my/helm-ssh-remote-term ()
   (interactive)
   (helm :sources (helm-source-ssh-remote-term)
-	:buffer "*helm-ssh-remote-term*"))
+        :buffer "*helm-ssh-remote-term*"))
 
 (defun my/local-term ()
   (interactive)
@@ -326,11 +326,11 @@ _SPC_ cancel    _o_nly this     _d_elete
 (setq vc-follow-symlinks t)
 
 (add-to-list 'tramp-methods
-    '("yadm"
-     (tramp-login-program "yadm")
-     (tramp-login-args (("enter")))
-     (tramp-remote-shell "/bin/sh")
-     (tramp-remote-shell-args ("-c"))))
+             '("yadm"
+               (tramp-login-program "yadm")
+               (tramp-login-args (("enter")))
+               (tramp-remote-shell "/bin/sh")
+               (tramp-remote-shell-args ("-c"))))
 
 (setq diff-switches "-u")
 (setq vc-diff-switches '("-b" "-B" "-u"))
@@ -342,12 +342,12 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (require 'tramp)
 (add-to-list 'tramp-methods
- '("yadm"
-   (tramp-login-program "yadm")
-   (tramp-login-args (("enter")))
-   (tramp-login-env (("SHELL") ("/bin/sh")))
-   (tramp-remote-shell "/bin/sh")
-   (tramp-remote-shell-args ("-c"))))
+             '("yadm"
+               (tramp-login-program "yadm")
+               (tramp-login-args (("enter")))
+               (tramp-login-env (("SHELL") ("/bin/sh")))
+               (tramp-remote-shell "/bin/sh")
+               (tramp-remote-shell-args ("-c"))))
 
 (use-package projectile
   :diminish projectile-mode
@@ -366,26 +366,26 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (use-package avy
   :init (defhydra hydra-avy (global-map "M-g" :color blue)
-  "avy-goto"
-  ("c" avy-goto-char "char")
-  ("C" avy-goto-char-2 "char-2")
-  ("w" avy-goto-word-1 "word")
-  ("s" avy-goto-subword-1 "subword")
-  ("u" link-hint-open-link "open-URI")
-  ("U" link-hint-copy-link "copy-URI"))
+          "avy-goto"
+          ("c" avy-goto-char "char")
+          ("C" avy-goto-char-2 "char-2")
+          ("w" avy-goto-word-1 "word")
+          ("s" avy-goto-subword-1 "subword")
+          ("u" link-hint-open-link "open-URI")
+          ("U" link-hint-copy-link "copy-URI"))
   :bind (("M-g g" . avy-goto-line)))
 
 (defhydra hydra-goto-line (goto-map ""
-				    :pre (linum-mode 1)
-				    :post (linum-mode -1))
+                                    :pre (linum-mode 1)
+                                    :post (linum-mode -1))
   "goto-line"
   ("g" goto-line "go")
   ("m" set-mark-command "mark" :bind nil)
   ("q" nil "quit"))
 
 (use-package lacarte
- :ensure nil
- :bind (("<f10>" . lacarte-execute-menu-command)))
+  :ensure nil
+  :bind (("<f10>" . lacarte-execute-menu-command)))
 
 (use-package windmove
   :ensure nil
@@ -435,7 +435,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package multiple-cursors
   :init (defhydra multiple-cursors-hydra (global-map "C-x m")
-    "
+          "
      ^Up^            ^Down^        ^Other^
 ----------------------------------------------
 [_p_]   Next    [_n_]   Next    [_l_] Edit lines
@@ -446,19 +446,19 @@ point reaches the beginning or end of the buffer, stop there."
 ^ ^             ^ ^             [_s_] Sort regions
 ^ ^             ^ ^             [_q_] Quit
 "
-    ("i" mc/insert-numbers)
-    ("h" mc-hide-unmatched-lines-mode)
-    ("s" mc/sort-regions)
-    ("l" mc/edit-lines :exit t)
-    ("a" mc/mark-all-like-this :exit t)
-    ("n" mc/mark-next-like-this)
-    ("N" mc/skip-to-next-like-this)
-    ("M-n" mc/unmark-next-like-this)
-    ("p" mc/mark-previous-like-this)
-    ("P" mc/skip-to-previous-like-this)
-    ("M-p" mc/unmark-previous-like-this)
-    ("r" mc/mark-all-in-region-regexp :exit t)
-    ("q" nil))
+          ("i" mc/insert-numbers)
+          ("h" mc-hide-unmatched-lines-mode)
+          ("s" mc/sort-regions)
+          ("l" mc/edit-lines :exit t)
+          ("a" mc/mark-all-like-this :exit t)
+          ("n" mc/mark-next-like-this)
+          ("N" mc/skip-to-next-like-this)
+          ("M-n" mc/unmark-next-like-this)
+          ("p" mc/mark-previous-like-this)
+          ("P" mc/skip-to-previous-like-this)
+          ("M-p" mc/unmark-previous-like-this)
+          ("r" mc/mark-all-in-region-regexp :exit t)
+          ("q" nil))
   :bind (("C-^" . set-rectangular-region-anchor)
          ("M-3" . mc/mark-next-like-this)
          ("M-4" . mc/mark-previous-like-this)
@@ -470,7 +470,7 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (("M-2" . er/expand-region)))
 
 (use-package company
-:config (global-company-mode))
+  :config (global-company-mode))
 
 (defun my/forward-transpose-whitespace (begin end)
   "If mark is active, swap leading whitespace with region between
@@ -482,35 +482,35 @@ point reaches the beginning or end of the buffer, stop there."
   (let* ((string-to-be-switched
           (if (use-region-p)
               (delete-and-extract-region begin end)
-	      (progn
-		(skip-chars-forward "[:space:]")
-		(delete-and-extract-region (point) (1+ (point))))))
+            (progn
+              (skip-chars-forward "[:space:]")
+              (delete-and-extract-region (point) (1+ (point))))))
          (right-anchor (point))
          (whitespace
-	  (progn
-	    (skip-chars-backward "[:space:]")
-	    (delete-and-extract-region (point) right-anchor))))
+          (progn
+            (skip-chars-backward "[:space:]")
+            (delete-and-extract-region (point) right-anchor))))
     (insert string-to-be-switched whitespace)))
 
 (global-set-key (kbd "C-c t") 'my/forward-transpose-whitespace)
 
 (defun my/unfill-paragraph (&optional region)
-    "Takes a multi-line paragraph and makes it into a single line of text."
-    (interactive (progn
-                   (barf-if-buffer-read-only)
-                   (list t)))
-    (let ((fill-column (point-max)))
-      (fill-paragraph nil region)))
+  "Takes a multi-line paragraph and makes it into a single line of text."
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (list t)))
+  (let ((fill-column (point-max)))
+    (fill-paragraph nil region)))
 (bind-key "C-x M-q" 'my/unfill-paragraph)
 
 (defun my/fill-or-unfill-paragraph (&optional unfill region)
-    "Fill paragraph (or REGION).
+  "Fill paragraph (or REGION).
   With the prefix argument UNFILL, unfill it instead."
-    (interactive (progn
-                   (barf-if-buffer-read-only)
-                   (list (if current-prefix-arg 'unfill) t)))
-    (let ((fill-column (if unfill (point-max) fill-column)))
-      (fill-paragraph nil region)))
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (list (if current-prefix-arg 'unfill) t)))
+  (let ((fill-column (if unfill (point-max) fill-column)))
+    (fill-paragraph nil region)))
 (bind-key "M-q" 'my/fill-or-unfill-paragraph)
 
 (remove-hook 'text-mode-hook #'turn-on-auto-fill)
@@ -557,7 +557,7 @@ point reaches the beginning or end of the buffer, stop there."
         (contents
          (if (use-region-p) (buffer-substring beg end) (buffer-string)))
         (gist (if (use-region-p) (gist-region beg end) (gist-buffer))))
-      (kill-new
+    (kill-new
      (format "\n[[%s][Gist: %s]]\n#+begin_src %s\n%s\n#+end_src\n"
              (oref (oref gist :data) :html-url) filename
              (replace-regexp-in-string "-mode$" "" mode)
@@ -568,41 +568,41 @@ point reaches the beginning or end of the buffer, stop there."
 (setq-default indent-tabs-mode nil)
 
 (use-package compile
-   :init (progn
-            (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-            (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-            (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-            (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-            (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
-            (setq compilation-scroll-output 'first-error))
+  :init (progn
+          (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+          (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+          (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+          (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+          (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
+  (setq compilation-scroll-output 'first-error))
 
 (defhydra hydra-next-error
-    (global-map "C-x")
-      "
+  (global-map "C-x")
+  "
 Compilation errors:
 _j_: next error        _h_: first error    _q_uit
 _k_: previous error    _l_: last error
 "
-      ("`" next-error     nil)
-      ("j" next-error     nil :bind nil)
-      ("k" previous-error nil :bind nil)
-      ("h" first-error    nil :bind nil)
-      ("l" (condition-case err
-	       (while t
-		 (next-error))
-	     (user-error nil))
-	   nil :bind nil)
-      ("q" nil            nil :color blue))
+  ("`" next-error     nil)
+  ("j" next-error     nil :bind nil)
+  ("k" previous-error nil :bind nil)
+  ("h" first-error    nil :bind nil)
+  ("l" (condition-case err
+           (while t
+             (next-error))
+         (user-error nil))
+   nil :bind nil)
+  ("q" nil            nil :color blue))
 
 (use-package auctex
-   :defer t
-   :config (progn (setq TeX-PDF-mode t)
-                  (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
+  :defer t
+  :config (progn (setq TeX-PDF-mode t)
+                 (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 
 (use-package slime
-   :ensure t
-   :config (setq slime-contribs '(slime-fancy)
-                 inferior-lisp-program "/usr/bin/sbcl"))
+  :ensure t
+  :config (setq slime-contribs '(slime-fancy)
+                inferior-lisp-program "/usr/bin/sbcl"))
 
 (defun my/eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -635,13 +635,13 @@ _k_: previous error    _l_: last error
 (use-package rustic)
 
 (setq fortran-comment-region "!"
-	  fortran-line-length 200)
+      fortran-line-length 200)
 
 (use-package pandoc-mode)
 (use-package markdown-mode
   :ensure t
   :init (progn
-         (add-hook 'markdown-mode-hook 'pandoc-mode)))
+          (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
 (setq c-default-style "bsd"
       c-basic-offset 2
@@ -650,16 +650,16 @@ _k_: previous error    _l_: last error
 (c-set-offset 'cpp-macro 0 nil)
 
 (add-hook 'c++-mode-hook '(lambda ()
-			   (define-key c++-mode-map "\C-cf" 'align-current)))
+                            (define-key c++-mode-map "\C-cf" 'align-current)))
 
 (add-hook 'c-mode-hook '(lambda ()
-			 (define-key c-mode-map "\C-cf" 'align-current)))
+                          (define-key c-mode-map "\C-cf" 'align-current)))
 
 (add-hook 'c++-mode-hook '(lambda ()
-			   (key-chord-define c++-mode-map ";;" "\C-e;")))
+                            (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (add-hook 'c-mode-hook '(lambda ()
-			 (key-chord-define c++-mode-map ";;" "\C-e;")))
+                          (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (provide 'dot-emacs)
 ;;; dot-emacs ends here
