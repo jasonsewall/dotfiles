@@ -706,6 +706,11 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key [remap move-beginning-of-line]
                 'my/smarter-move-beginning-of-line)
 #+end_src
+*** Ripgrep
+#+begin_src emacs-lisp :tangle yes
+  (use-package rg
+    :init (rg-enable-default-bindings))
+#+end_src
 ** Editing tricks
 *** Yasnippet
 #+begin_src emacs-lisp :tangle yes
