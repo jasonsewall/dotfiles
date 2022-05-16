@@ -715,7 +715,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 *** Which Key
 #+begin_src emacs-lisp :tangle yes
-(use-package which-key)
+  (use-package which-key
+    :init (which-key-mode))
 #+end_src
 
 *** Aggresive indentation

@@ -425,7 +425,8 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package yasnippet
   :init (yas-global-mode 1))
 
-(use-package which-key)
+(use-package which-key
+  :init (which-key-mode))
 
 (use-package aggressive-indent)
 
