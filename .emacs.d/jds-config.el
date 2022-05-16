@@ -615,6 +615,21 @@ _k_: previous error    _l_: last error
 (setq python-python-command "python3")
 (setq python-shell-interpreter "python3")
 
+(use-package lsp-pyright
+  :after lsp-mode
+  :custom
+  (lsp-pyright-auto-import-completions nil)
+  (lsp-pyright-typechecking-mode "off")
+  :config
+  (fk/async-process
+   "npm outdated -g | grep pyright | wc -l" nil
+   (lambda (process output)
+     (pcase output
+       ("0\n" (message "Pyright is up to date."))
+       ("1\n" (message "A pyright update is available."))))))
+
+(use-package rustic)
+
 (setq fortran-comment-region "!"
 	  fortran-line-length 200)
 
