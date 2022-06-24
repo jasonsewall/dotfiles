@@ -262,6 +262,8 @@ _SPC_ cancel    _o_nly this     _d_elete
         try-complete-lisp-symbol-partially
         try-complete-lisp-symbol))
 
+(use-package diminish)
+
 (use-package powerline
   :config (powerline-default-theme))
 
@@ -660,6 +662,15 @@ _k_: previous error    _l_: last error
 
 (add-hook 'c-mode-hook '(lambda ()
                           (key-chord-define c++-mode-map ";;" "\C-e;")))
+
+(use-package cuda-mode
+  :init (progn
+          (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+
+(use-package plantuml-mode
+  :init (progn
+          (setq plantuml-executable-path "/usr/bin/plantuml")
+          (setq plantuml-default-exec-mode 'executable)))
 
 (provide 'dot-emacs)
 ;;; dot-emacs ends here

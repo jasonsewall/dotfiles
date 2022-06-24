@@ -496,6 +496,12 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
           try-complete-lisp-symbol))
 #+END_SRC
 
+*** Diminish
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package diminish)
+#+END_SRC
+
 *** Powerline
 
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1049,6 +1055,21 @@ New modern C setup!
 
   (add-hook 'c-mode-hook '(lambda ()
                             (key-chord-define c++-mode-map ";;" "\C-e;")))
+#+end_src
+
+*** CUDA
+#+begin_src emacs-lisp :tangle yes
+    (use-package cuda-mode
+      :init (progn
+              (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+#+end_src
+
+*** PlantUML
+#+begin_src emacs-lisp :tangle yes
+  (use-package plantuml-mode
+    :init (progn
+            (setq plantuml-executable-path "/usr/bin/plantuml")
+            (setq plantuml-default-exec-mode 'executable)))
 #+end_src
 
 * Back Matter
