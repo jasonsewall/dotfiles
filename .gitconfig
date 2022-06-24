@@ -4,9 +4,9 @@
 [push]
 	default = matching
 [color]
-        diff = auto
-        status = auto
-        branch = auto
+  diff = auto
+  status = auto
+  branch = auto
 	interactive = auto
 [clean]
 	requireForce = true
