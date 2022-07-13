@@ -592,6 +592,11 @@ I don't know if this is actually necessary
 #+begin_src emacs-lisp :tangle yes
   (setq vc-follow-symlinks t)
 #+end_src
+*** Git-link
+#+begin_src emacs-lisp :tangle yes
+    (use-package git-link
+      :init (global-set-key (kbd "C-c m l") 'git-link))
+#+end_src
 *** YADM
 #+begin_src emacs-lisp :tangle yes
   (add-to-list 'tramp-methods

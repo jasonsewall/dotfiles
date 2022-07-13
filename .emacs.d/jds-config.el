@@ -327,6 +327,9 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (setq vc-follow-symlinks t)
 
+(use-package git-link
+  :init (global-set-key (kbd "C-c m l") 'git-link))
+
 (add-to-list 'tramp-methods
              '("yadm"
                (tramp-login-program "yadm")
