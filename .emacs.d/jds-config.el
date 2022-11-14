@@ -32,6 +32,7 @@
 (use-package hydra)
 
 (use-package flycheck
+  :diminish
   :init (add-hook 'after-init-hook #'global-flycheck-mode))
 
 (use-package flycheck-clang-analyzer
@@ -262,7 +263,8 @@ _SPC_ cancel    _o_nly this     _d_elete
         try-complete-lisp-symbol-partially
         try-complete-lisp-symbol))
 
-(use-package diminish)
+(use-package diminish
+  :init (diminish 'eldoc-mode))
 
 (use-package powerline
   :config (powerline-default-theme))
@@ -430,6 +432,13 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package rg
   :init (rg-enable-default-bindings))
 
+(use-package phi-search
+  :diminish phi-search
+  :config
+  (progn
+    (global-set-key (kbd "C-s") 'phi-search)
+    (global-set-key (kbd "C-r") 'phi-search-backward)))
+
 (use-package yasnippet
   :init (yas-global-mode 1))
 
@@ -475,6 +484,7 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (("M-2" . er/expand-region)))
 
 (use-package company
+  :diminish
   :config (global-company-mode))
 
 (defun my/forward-transpose-whitespace (begin end)
@@ -525,6 +535,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+(use-package ws-butler
+  :ensure t
+  :init (add-hook 'prog-mode-hook #'ws-butler-mode))
+
 (setq require-final-newline 't)
 
 (use-package undo-tree
@@ -536,6 +550,7 @@ point reaches the beginning or end of the buffer, stop there."
     (setq undo-tree-visualizer-diff t)))
 
 (use-package lsp-mode
+  :diminish
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
@@ -621,21 +636,14 @@ _k_: previous error    _l_: last error
 
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 
-(setq python-python-command "python3")
-(setq python-shell-interpreter "python3")
+(setq python-python-command "python3.10")
+(setq python-shell-interpreter "python3.10")
 
 (use-package lsp-pyright
   :after lsp-mode
   :custom
   (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-typechecking-mode "off")
-  :config
-  (fk/async-process
-   "npm outdated -g | grep pyright | wc -l" nil
-   (lambda (process output)
-     (pcase output
-       ("0\n" (message "Pyright is up to date."))
-       ("1\n" (message "A pyright update is available."))))))
+  (lsp-pyright-typechecking-mode "off"))
 
 (use-package rustic)
 

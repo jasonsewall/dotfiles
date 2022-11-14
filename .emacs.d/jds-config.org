@@ -129,6 +129,7 @@ Keybinding craziness
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package flycheck
+    :diminish
     :init (add-hook 'after-init-hook #'global-flycheck-mode))
 #+END_SRC
 
@@ -499,7 +500,8 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 *** Diminish
 
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package diminish)
+  (use-package diminish
+    :init (diminish 'eldoc-mode))
 #+END_SRC
 
 *** Powerline
@@ -722,6 +724,15 @@ Use arrow keys to switch windows (and frames, with X)
   (use-package rg
     :init (rg-enable-default-bindings))
 #+end_src
+*** Phi-search
+#+begin_src emacs-lisp :tangle yes
+  (use-package phi-search
+    :diminish phi-search
+    :config
+    (progn
+      (global-set-key (kbd "C-s") 'phi-search)
+      (global-set-key (kbd "C-r") 'phi-search-backward)))
+#+end_src
 ** Editing tricks
 *** Yasnippet
 #+begin_src emacs-lisp :tangle yes
@@ -785,6 +796,7 @@ So powerful
 *** Autocomplete
 #+begin_src emacs-lisp :tangle yes
   (use-package company
+    :diminish
     :config (global-company-mode))
 #+end_src
 *** Transpose, but keep whitespace
@@ -858,6 +870,12 @@ Also, =visual-line-mode= is so much better than =auto-fill-mode=. It doesn't act
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ws-butler
+    :ensure t
+    :init (add-hook 'prog-mode-hook #'ws-butler-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
   (setq require-final-newline 't)
 #+END_SRC
 
@@ -882,6 +900,7 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 **** lsp-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package lsp-mode
+    :diminish
     :init
     ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
     (setq lsp-keymap-prefix "C-c l")
@@ -1003,8 +1022,8 @@ Add a hydra for navigating compilation logs
 #+end_src
 *** Python
 #+begin_src emacs-lisp :tangle yes
-  (setq python-python-command "python3")
-  (setq python-shell-interpreter "python3")
+  (setq python-python-command "python3.10")
+  (setq python-shell-interpreter "python3.10")
 #+end_src
 **** Python lsp-mode
 #+begin_src emacs-lisp :tangle yes
@@ -1012,14 +1031,7 @@ Add a hydra for navigating compilation logs
     :after lsp-mode
     :custom
     (lsp-pyright-auto-import-completions nil)
-    (lsp-pyright-typechecking-mode "off")
-    :config
-    (fk/async-process
-     "npm outdated -g | grep pyright | wc -l" nil
-     (lambda (process output)
-       (pcase output
-         ("0\n" (message "Pyright is up to date."))
-         ("1\n" (message "A pyright update is available."))))))
+    (lsp-pyright-typechecking-mode "off"))
 #+end_src
 *** Rust
 #+begin_src emacs-lisp :tangle yes
