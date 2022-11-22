@@ -1,3 +1,5 @@
+(require 'early-init (expand-file-name "early-init" user-emacs-directory))
+
 (package-initialize)
 (add-to-list 'load-path "~/.emacs.d/site-packages/")
 (setq package-enable-at-startup nil)
@@ -20,30 +22,32 @@
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t))
 
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
 (setq use-package-verbose t)
 (setq use-package-always-ensure t)
-(require 'use-package)
 (use-package auto-compile
+  :straight t
   :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
 
 (use-package hydra)
 
 (use-package flycheck
+  :straight t
   :diminish
   :init (add-hook 'after-init-hook #'global-flycheck-mode))
 
 (use-package flycheck-clang-analyzer
+  :straight t
   :ensure t
   :after flycheck
   :config (flycheck-clang-analyzer-setup))
 
 (use-package key-chord
+  :straight t
   :init (key-chord-mode 1))
 
-(use-package dash)
+(use-package dash
+  :straight t)
 
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
 
@@ -94,7 +98,8 @@
 (unless window-system
   (send-string-to-terminal (concat "\ek" frame-title-format "\e\\")))
 
-(use-package ace-window)
+(use-package ace-window
+  :straight t)
 (defhydra hydra-window (global-map "C-x w")
   "
 Movement^^        ^Split^         ^Switch^      ^Resize^
@@ -114,100 +119,264 @@ _SPC_ cancel    _o_nly this     _d_elete
   ("w" hydra-move-splitter-down)
   ("e" hydra-move-splitter-up)
   ("r" hydra-move-splitter-right)
-  ("b" helm-mini)
-  ("f" helm-find-files)
   ("F" follow-mode)
   ("a" (lambda ()
-         (interactive)
-         (ace-window 1)
-         (add-hook 'ace-window-end-once-hook
-                   'hydra-window/body))
+	 (interactive)
+	 (ace-window 1)
+	 (add-hook 'ace-window-end-once-hook
+		   'hydra-window/body))
    )
   ("v" (lambda ()
-         (interactive)
-         (split-window-right)
-         (windmove-right))
+	 (interactive)
+	 (split-window-right)
+	 (windmove-right))
    )
   ("x" (lambda ()
-         (interactive)
-         (split-window-below)
-         (windmove-down))
+	 (interactive)
+	 (split-window-below)
+	 (windmove-down))
    )
   ("s" (lambda ()
-         (interactive)
-         (ace-window 4)
-         (add-hook 'ace-window-end-once-hook
-                   'hydra-window/body)))
+	 (interactive)
+	 (ace-window 4)
+	 (add-hook 'ace-window-end-once-hook
+		   'hydra-window/body)))
   ("S" save-buffer)
   ("d" delete-window)
   ("D" (lambda ()
-         (interactive)
-         (ace-window 16)
-         (add-hook 'ace-window-end-once-hook
-                   'hydra-window/body))
+	 (interactive)
+	 (ace-window 16)
+	 (add-hook 'ace-window-end-once-hook
+		   'hydra-window/body))
    )
   ("o" delete-other-windows)
   ("i" ace-maximize-window)
   ("z" (progn
-         (winner-undo)
-         (setq this-command 'winner-undo))
+	 (winner-undo)
+	 (setq this-command 'winner-undo))
    )
   ("Z" winner-redo)
   ("SPC" nil))
 
-(use-package helm
-  :diminish helm-mode
-  :init
-  (progn
-    (require 'helm-config)
-    (require 'helm-adaptive)
-    (setq helm-candidate-number-limit 100)
-    ;; From https://gist.github.com/antifuchs/9238468
-    (setq helm-idle-delay 0.0 ; update fast sources immediately (doesn't).
-          helm-input-idle-delay 0.01  ; this actually updates things
-                                        ; reeeelatively quickly.
-          helm-yas-display-key-on-candidate t
-          helm-quick-update t
-          helm-M-x-requires-pattern nil
-          helm-ff-skip-boring-files t)
-    (helm-mode))
-  :bind (("C-c C-h"     . helm-mini)
-         ("C-h a"     . helm-apropos)
-         ("C-x C-b"   . helm-buffers-list)
-         ("C-x b"     . helm-buffers-list)
-         ("M-y"       . helm-show-kill-ring)
-         ("M-x"       . helm-M-x)
-         ("C-x c o"   . helm-occur)
-         ("C-x c s"   . helm-swoop)
-         ("C-c h m"   . helm-man-woman)
-         ("C-c h f"   . helm-find)
-         ("C-c h l"   . helm-locate)
-         ("C-c h r"   . helm-resume)
-         ("C-h r"     . helm-info-emacs)
-         ("C-x C-f"   . helm-find-files)
-         ("C-x c SPC" . helm-all-mark-rings)
-         :map helm-map
-         ("<tab>"     . helm-execute-persistent-action)
-         ("C-i"       . helm-execute-persistent-action)
-         ("C-z"       . helm-select-action)))
+;;; -*- lexical-binding: t; -*-
+
+(use-package vertico
+  :straight (vertico :files (:defaults "extensions/*"))
+  :bind (("C-x M-r" . vertico-repeat)
+         :map vertico-map
+         ("C-l" . vertico-directory-delete-word)
+         ("M-g" . vertico-multiform-grid)
+         ("M-q" . vertico-multiform-flat))
+  :init (vertico-mode 1)
+  :config (progn
+            (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+            (vertico-mouse-mode 1)
+            (vertico-multiform-mode 1)
+            (setq vertico-multiform-categories '((consult-grep buffer))
+                  vertico-multiform-commands '((tmm-menubar flat)
+                                               (tmm-shortcut flat)))))
+
+(use-package orderless
+  :straight t
+  :after vertico
+  :config (progn
+            (setq orderless-matching-styles '(orderless-regexp
+                                              orderless-initialism
+                                              orderless-prefixes)
+                  orderless-component-separator #'orderless-escapable-split-on-space)
+
+            ;; Use the built-in "partial-completion" style to complete
+            ;; file inputs such as "/e/ni/co.nix" into
+            ;; "/etc/nixos/configuration.nix".  The "basic" style is
+            ;; needed to support the hostname completion in the TRAMP
+            ;; inputs such as "/sshx:HOSTNAME".
+            (setq completion-category-defaults nil
+                  completion-category-overrides '((file (styles basic partial-completion))))
+
+            (setq completion-styles '(orderless))
+
+            (defun vifon/orderless-without-if-bang (pattern index total)
+              (when (string-prefix-p "!" pattern)
+                `(orderless-without-literal . ,(substring pattern 1))))
+            (defun vifon/orderless-literal-if-equal (pattern index total)
+              (when (string-suffix-p "=" pattern)
+                `(orderless-literal . ,(substring pattern 0 -1))))
+            (setq orderless-style-dispatchers '(vifon/orderless-without-if-bang
+                                                vifon/orderless-literal-if-equal))))
+
+(use-package embark
+  :straight t
+  :bind (("C-c o" . embark-act)
+         ("C-."   . embark-act)
+         :map minibuffer-local-map
+         ("M-o"   . embark-act)
+         :map embark-command-map
+         ;; Unbind the dangerous `global-set-key' and `local-set-key'
+         ;; actions.  It's far too easy to accidentally bind over some
+         ;; `self-insert-command' binding or even over
+         ;; \\[keyboard-quit].
+         ("g" . nil)
+         ("l" . nil))
+  :config (progn
+            (setq embark-mixed-indicator-delay 2)
+
+            ;; Make the eval action editable.  Evaluating code
+            ;; in-place is simple enough without Embark, if I invoke
+            ;; it with Embark, I almost definitely want to edit the
+            ;; expression beforehand.  And even if not, I can
+            ;; just confirm.
+            (cl-pushnew 'embark--allow-edit
+                        (alist-get 'pp-eval-expression embark-target-injection-hooks))
+
+            ;; Reload the project list after using
+            ;; C-u `embark-act' with `project-forget-project'.
+            (cl-pushnew 'embark--restart
+                        (alist-get 'project-forget-project embark-post-action-hooks))
+
+            (defun embark-act-with-eval (expression)
+              "Evaluate EXPRESSION and call `embark-act' on the result."
+              (interactive "sExpression: ")
+              (with-temp-buffer
+                (let ((expr-value (eval (read expression))))
+                  (insert (if (stringp expr-value)
+                              expr-value
+                            (format "%S" expr-value))))
+                (embark-act)))
+
+            (dolist (keymap (list embark-variable-map embark-expression-map))
+              (define-key keymap (kbd "v") #'embark-act-with-eval))
+
+            ;; Source: https://github.com/oantolin/embark/wiki/Additional-Actions#attaching-file-to-an-email-message
+            (autoload 'gnus-dired-attach "gnus-dired" nil t)
+            (defun embark-attach-file (file)
+              "Attach FILE to an email message."
+              (interactive "fAttach: ")
+              (gnus-dired-attach (list file)))
+            (bind-key "a" #'embark-attach-file embark-file-map)))
+
+(use-package embark-consult
+  :straight t
+  :after (embark consult))
+
+(use-package marginalia
+  :straight t
+  :after vertico
+  :demand t                     ; :demand applies to :bind but not
+                                ; :after.  We want to eagerly load
+                                ; marginalia once vertico is loaded.
+  :bind (:map minibuffer-local-map
+         ("C-o" . marginalia-cycle))
+  :config (marginalia-mode 1))
+
+(use-package consult
+  :straight t
+  :bind (("M-s f" . consult-line)
+         ("M-g g" . consult-line)
+         ("M-g o" . consult-outline)
+         ("M-g i" . consult-imenu)
+         ("M-g r" . consult-ripgrep)
+         ("C-x C-r" . consult-recent-file)
+         ([remap switch-to-buffer] . consult-buffer)
+         ([remap yank-pop] . consult-yank-pop)
+         ([remap goto-line] . consult-goto-line)
+         :map minibuffer-local-map
+         ([remap previous-matching-history-element] . consult-history)
+         :map isearch-mode-map
+         ("TAB" . vifon/isearch-to-consult-line))
+  :config (progn
+            (setq consult-project-root-function #'vc-root-dir)
+            (consult-customize
+             consult-ripgrep consult-grep
+             consult-buffer consult-recent-file
+             :preview-key (kbd "M-."))
+
+            (defun vifon/orderless-fix-consult-tofu (pattern index total)
+              "Ignore the last character which is hidden and used only internally."
+              (when (string-suffix-p "$" pattern)
+                `(orderless-regexp . ,(concat (substring pattern 0 -1)
+                                              "[\x200000-\x300000]*$"))))
+
+            (dolist (command '(consult-buffer consult-line))
+              (advice-add command :around
+                          (lambda (orig &rest args)
+                            (let ((orderless-style-dispatchers (cons #'vifon/orderless-fix-consult-tofu
+                                                                     orderless-style-dispatchers)))
+                              (apply orig args)))))
+
+            ;; Disable consult-buffer project-related capabilities as
+            ;; they are very slow in TRAMP.
+            (setq consult-buffer-sources
+                  (delq 'consult--source-project-buffer
+                        (delq 'consult--source-project-file consult-buffer-sources)))
+
+            (setq consult--source-hidden-buffer
+                  (plist-put consult--source-hidden-buffer :narrow ?h))
+
+            (defun vifon/isearch-to-consult-line ()
+              "Search using `consult-line' what was being searched with `isearch'."
+              (interactive)
+              (isearch-exit)
+              (let ((query (if isearch-regexp
+                               isearch-string
+                             (regexp-quote isearch-string))))
+                (consult-line query)))))
+
+(use-package corfu
+  :straight t
+  :init (global-corfu-mode 1))
 
 
-(ido-mode -1) ;; Turn off ido mode in case I enabled it accidentally
+;;; https://with-emacs.com/posts/tutorials/customize-completion-at-point/
+(autoload 'ffap-file-at-point "ffap")
+(add-hook 'completion-at-point-functions
+          (defun complete-path-at-point+ ()
+            (let ((fn (ffap-file-at-point))
+                  (fap (thing-at-point 'filename)))
+              (when (and (or fn (equal "/" fap))
+                         (save-excursion
+                           (search-backward fap (line-beginning-position) t)))
+                (list (match-beginning 0)
+                      (match-end 0)
+                      #'completion-file-name-table :exclusive 'no))))
+          'append)
 
-(use-package helm-descbinds
-  :defer t
-  :bind (("C-h b" . helm-descbinds)
-         ("C-h w" . helm-descbinds)))
+;;; Add prompt indicator to `completing-read-multiple'.
+;;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+;;;
+;;; Taken from the Vertico docs.
+(defun crm-indicator (args)
+  (cons (format "[CRM%s] %s"
+                (replace-regexp-in-string
+                 "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                 crm-separator)
+                (car args))
+        (cdr args)))
+(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
-(use-package smart-mode-line)
+(setq enable-recursive-minibuffers t)
+(minibuffer-depth-indicate-mode 1)
+
+;;; Use the completing-read UI for the M-tab completion unless
+;;; overridden (for example by `corfu').
+(setq-default completion-in-region-function
+              (lambda (&rest args)
+                (apply (if vertico-mode
+                           #'consult-completion-in-region
+                         #'completion--in-region)
+                       args)))
+
+(use-package smart-mode-line
+  :straight t)
 
 (fset 'yes-or-no-p 'y-or-n-p)
 
 (use-package miniedit
+  :straight t
   :commands minibuffer-edit
   :init (miniedit-install))
 
 (use-package zenburn-theme
+  :straight t
   :init
   (progn
     (cond
@@ -222,6 +391,7 @@ _SPC_ cancel    _o_nly this     _d_elete
 (show-paren-mode t)
 
 (use-package guide-key
+  :straight t
   :defer t
   :diminish guide-key-mode
   :config
@@ -264,19 +434,23 @@ _SPC_ cancel    _o_nly this     _d_elete
         try-complete-lisp-symbol))
 
 (use-package diminish
+  :straight t
   :init (diminish 'eldoc-mode))
 
 (use-package powerline
+  :straight t
   :config (powerline-default-theme))
 
 (use-package tramp
+  :straight t
   :init (setq tramp-unified-filename t))
 
-(use-package tramp-term)
+(use-package tramp-term
+  :straight t)
 
 (add-hook 'term-mode-hook
-          (lambda ()
-            (setq term-buffer-maximum-size 100000)))
+	  (lambda ()
+	    (setq term-buffer-maximum-size 100000)))
 
 ;; Use this for remote so I can specify command line arguments
 (defun my/remote-term (new-buffer-name cmd &rest switches)
@@ -295,21 +469,22 @@ _SPC_ cancel    _o_nly this     _d_elete
   (switch-to-buffer term-ansi-buffer-name))
 
 (use-package pcomplete
+  :straight t
   :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
-                                       (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
-                                       (my/remote-term hostname "ssh" hostname))))
+				 (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
+				 (my/remote-term hostname "ssh" hostname))))
 
-(defun helm-source-ssh-remote-term ()
-  (helm-build-sync-source "SSH hostname"
-    :candidates (lambda () (pcmpl-ssh-hosts))
-    :filtered-candidate-transformer '(helm-adaptive-sort)
-    :nomark t
-    :action '(("Select host" . my/ssh-remote-term))))
+;; (defun helm-source-ssh-remote-term ()
+;;   (helm-build-sync-source "SSH hostname"
+;;     :candidates (lambda () (pcmpl-ssh-hosts))
+;;     :filtered-candidate-transformer '(helm-adaptive-sort)
+;;     :nomark t
+;;     :action '(("Select host" . my/ssh-remote-term))))
 
-(defun my/helm-ssh-remote-term ()
-  (interactive)
-  (helm :sources (helm-source-ssh-remote-term)
-        :buffer "*helm-ssh-remote-term*"))
+;; (defun my/helm-ssh-remote-term ()
+;;   (interactive)
+;;   (helm :sources (helm-source-ssh-remote-term)
+;;         :buffer "*helm-ssh-remote-term*"))
 
 (defun my/local-term ()
   (interactive)
@@ -319,17 +494,19 @@ _SPC_ cancel    _o_nly this     _d_elete
 (add-hook 'comint-output-filter-functions 'comint-watch-for-password-prompt)
 
 (use-package ibuffer
+  :straight t
   :bind (("<f9>" . ibuffer))
   :init (setq ibuffer-shrink-to-minimum-size t
-              ibuffer-always-show-last-buffer nil
-              ibuffer-sorting-mode 'recency
-              ibuffer-use-header-line t))
+	ibuffer-always-show-last-buffer nil
+	ibuffer-sorting-mode 'recency
+	ibuffer-use-header-line t))
 
 (add-to-list 'vc-handled-backends 'GIT)
 
 (setq vc-follow-symlinks t)
 
 (use-package git-link
+  :straight t
   :init (global-set-key (kbd "C-c m l") 'git-link))
 
 (add-to-list 'tramp-methods
@@ -344,6 +521,7 @@ _SPC_ cancel    _o_nly this     _d_elete
 (setq vc-git-diff-switches nil)
 
 (use-package magit
+  :straight t
   :init (setq magit-auto-revert-mode t)
   :bind (("C-x C-g" . magit-status)))
 
@@ -357,6 +535,7 @@ _SPC_ cancel    _o_nly this     _d_elete
                (tramp-remote-shell-args ("-c"))))
 
 (use-package projectile
+  :straight t
   :diminish projectile-mode
   :config
   (progn
@@ -367,37 +546,40 @@ _SPC_ cancel    _o_nly this     _d_elete
     (add-to-list 'projectile-globally-ignored-files "node-modules"))
   :config
   (projectile-global-mode))
-(use-package helm-projectile)
 
 (global-set-key "\C-cg" 'goto-line)
 
 (use-package avy
+  :straight t
   :init (defhydra hydra-avy (global-map "M-g" :color blue)
-          "avy-goto"
-          ("c" avy-goto-char "char")
-          ("C" avy-goto-char-2 "char-2")
-          ("w" avy-goto-word-1 "word")
-          ("s" avy-goto-subword-1 "subword")
-          ("u" link-hint-open-link "open-URI")
-          ("U" link-hint-copy-link "copy-URI"))
+	  "avy-goto"
+	  ("c" avy-goto-char "char")
+	  ("C" avy-goto-char-2 "char-2")
+	  ("w" avy-goto-word-1 "word")
+	  ("s" avy-goto-subword-1 "subword")
+	  ("u" link-hint-open-link "open-URI")
+	  ("U" link-hint-copy-link "copy-URI"))
   :bind (("M-g g" . avy-goto-line)))
 
 (defhydra hydra-goto-line (goto-map ""
-                                    :pre (linum-mode 1)
-                                    :post (linum-mode -1))
+				    :pre (linum-mode 1)
+				    :post (linum-mode -1))
   "goto-line"
   ("g" goto-line "go")
   ("m" set-mark-command "mark" :bind nil)
   ("q" nil "quit"))
 
 (use-package lacarte
+  :straight t
   :ensure nil
   :bind (("<f10>" . lacarte-execute-menu-command)))
 
 (use-package windmove
+  :straight t
   :ensure nil
   :init (windmove-default-keybindings))
 (use-package framemove
+  :straight t
   :ensure nil
   :init (setq framemove-hook-into-windmove t))
 (global-set-key "\M-o" 'other-window)
@@ -430,9 +612,11 @@ point reaches the beginning or end of the buffer, stop there."
                 'my/smarter-move-beginning-of-line)
 
 (use-package rg
+  :straight t
   :init (rg-enable-default-bindings))
 
 (use-package phi-search
+  :straight t
   :diminish phi-search
   :config
   (progn
@@ -440,16 +624,20 @@ point reaches the beginning or end of the buffer, stop there."
     (global-set-key (kbd "C-r") 'phi-search-backward)))
 
 (use-package yasnippet
+  :straight t
   :init (yas-global-mode 1))
 
 (use-package which-key
+  :straight t
   :init (which-key-mode))
 
-(use-package aggressive-indent)
+(use-package aggressive-indent
+  :straight t)
 
 (use-package multiple-cursors
+  :straight t
   :init (defhydra multiple-cursors-hydra (global-map "C-x m")
-          "
+	  "
      ^Up^            ^Down^        ^Other^
 ----------------------------------------------
 [_p_]   Next    [_n_]   Next    [_l_] Edit lines
@@ -460,30 +648,32 @@ point reaches the beginning or end of the buffer, stop there."
 ^ ^             ^ ^             [_s_] Sort regions
 ^ ^             ^ ^             [_q_] Quit
 "
-          ("i" mc/insert-numbers)
-          ("h" mc-hide-unmatched-lines-mode)
-          ("s" mc/sort-regions)
-          ("l" mc/edit-lines :exit t)
-          ("a" mc/mark-all-like-this :exit t)
-          ("n" mc/mark-next-like-this)
-          ("N" mc/skip-to-next-like-this)
-          ("M-n" mc/unmark-next-like-this)
-          ("p" mc/mark-previous-like-this)
-          ("P" mc/skip-to-previous-like-this)
-          ("M-p" mc/unmark-previous-like-this)
-          ("r" mc/mark-all-in-region-regexp :exit t)
-          ("q" nil))
+	  ("i" mc/insert-numbers)
+	  ("h" mc-hide-unmatched-lines-mode)
+	  ("s" mc/sort-regions)
+	  ("l" mc/edit-lines :exit t)
+	  ("a" mc/mark-all-like-this :exit t)
+	  ("n" mc/mark-next-like-this)
+	  ("N" mc/skip-to-next-like-this)
+	  ("M-n" mc/unmark-next-like-this)
+	  ("p" mc/mark-previous-like-this)
+	  ("P" mc/skip-to-previous-like-this)
+	  ("M-p" mc/unmark-previous-like-this)
+	  ("r" mc/mark-all-in-region-regexp :exit t)
+	  ("q" nil))
   :bind (("C-^" . set-rectangular-region-anchor)
-         ("M-3" . mc/mark-next-like-this)
-         ("M-4" . mc/mark-previous-like-this)
-         ("M-#" . mc/unmark-next-like-this)
-         ("M-$" . mc/unmark-previous-like-this)))
+	 ("M-3" . mc/mark-next-like-this)
+	 ("M-4" . mc/mark-previous-like-this)
+	 ("M-#" . mc/unmark-next-like-this)
+	 ("M-$" . mc/unmark-previous-like-this)))
 
 (use-package expand-region
+  :straight t
   :defer t
   :bind (("M-2" . er/expand-region)))
 
 (use-package company
+  :straight t
   :diminish
   :config (global-company-mode))
 
@@ -536,12 +726,14 @@ point reaches the beginning or end of the buffer, stop there."
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 (use-package ws-butler
+  :straight t
   :ensure t
   :init (add-hook 'prog-mode-hook #'ws-butler-mode))
 
 (setq require-final-newline 't)
 
 (use-package undo-tree
+  :straight t
   :diminish undo-tree-mode
   :config
   (progn
@@ -550,23 +742,27 @@ point reaches the beginning or end of the buffer, stop there."
     (setq undo-tree-visualizer-diff t)))
 
 (use-package lsp-mode
+  :straight t
   :diminish
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :hook ((c++-mode . lsp)
-         (python-mode . lsp)
-         (c-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
+	 (python-mode . lsp)
+	 (c-mode . lsp)
+	 ;; if you want which-key integration
+	 (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp)
-(use-package lsp-ui :commands lsp-ui-mode)
-(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+(use-package lsp-ui
+  :straight t
+  :commands lsp-ui-mode)
 
 (use-package tree-sitter
+  :straight t
   :init
   (global-tree-sitter-mode))
-(use-package tree-sitter-langs)
+(use-package tree-sitter-langs
+  :straight t)
 
 (setq org-src-window-setup 'current-window)
 
@@ -588,12 +784,13 @@ point reaches the beginning or end of the buffer, stop there."
 (setq-default indent-tabs-mode nil)
 
 (use-package compile
+  :straight t
   :init (progn
-          (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-          (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-          (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-          (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-          (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
+	  (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+	  (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+	  (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+	  (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+	  (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
   (setq compilation-scroll-output 'first-error))
 
 (defhydra hydra-next-error
@@ -615,14 +812,16 @@ _k_: previous error    _l_: last error
   ("q" nil            nil :color blue))
 
 (use-package auctex
+  :straight t
   :defer t
   :config (progn (setq TeX-PDF-mode t)
-                 (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
+		 (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 
 (use-package slime
+  :straight t
   :ensure t
   :config (setq slime-contribs '(slime-fancy)
-                inferior-lisp-program "/usr/bin/sbcl"))
+		inferior-lisp-program "/usr/bin/sbcl"))
 
 (defun my/eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -640,21 +839,25 @@ _k_: previous error    _l_: last error
 (setq python-shell-interpreter "python3.10")
 
 (use-package lsp-pyright
+  :straight t
   :after lsp-mode
   :custom
   (lsp-pyright-auto-import-completions nil)
   (lsp-pyright-typechecking-mode "off"))
 
-(use-package rustic)
+(use-package rustic
+  :straight t)
 
 (setq fortran-comment-region "!"
       fortran-line-length 200)
 
-(use-package pandoc-mode)
+(use-package pandoc-mode
+  :straight t)
 (use-package markdown-mode
+  :straight t
   :ensure t
   :init (progn
-          (add-hook 'markdown-mode-hook 'pandoc-mode)))
+	  (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
 (setq c-default-style "bsd"
       c-basic-offset 2
@@ -675,13 +878,15 @@ _k_: previous error    _l_: last error
                           (key-chord-define c++-mode-map ";;" "\C-e;")))
 
 (use-package cuda-mode
+  :straight t
   :init (progn
-          (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+	  (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
 
 (use-package plantuml-mode
+  :straight t
   :init (progn
-          (setq plantuml-executable-path "/usr/bin/plantuml")
-          (setq plantuml-default-exec-mode 'executable)))
+	  (setq plantuml-executable-path "/usr/bin/plantuml")
+	  (setq plantuml-default-exec-mode 'executable)))
 
 (provide 'dot-emacs)
 ;;; dot-emacs ends here

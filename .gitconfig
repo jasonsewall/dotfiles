@@ -1,6 +1,5 @@
-[user]
-	name = Jason Sewall
-	email = jasewall@nvidia.com
+[include]
+  path = .gitconfig.local
 [push]
 	default = matching
 [color]
@@ -12,15 +11,7 @@
 	requireForce = true
 [rerere]
 	enabled = true
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
 [init]
 	defaultBranch = main
 [core]
 	excludesfile = ~/.gitignore
-[url "ssh://git@gitlab-master.nvidia.com:12051/"]
-	insteadOf = ssh://git@gitlab-master.nvidia.com/
-	insteadOf = git@gitlab-master.nvidia.com:
