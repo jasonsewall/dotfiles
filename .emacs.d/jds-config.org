@@ -675,7 +675,7 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 Real handy when working on remote machines
 #+begin_src emacs-lisp :tangle yes
   (use-package tramp
-    :straight t
+    :straight (:type built-in)
     :init (setq tramp-unified-filename t))
 #+end_src
 **** Tramp-term

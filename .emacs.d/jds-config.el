@@ -436,7 +436,7 @@ _SPC_ cancel    _o_nly this     _d_elete
   :config (powerline-default-theme))
 
 (use-package tramp
-  :straight t
+  :straight (:type built-in)
   :init (setq tramp-unified-filename t))
 
 (use-package tramp-term
