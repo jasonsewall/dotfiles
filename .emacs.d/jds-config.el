@@ -1,8 +1,6 @@
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 
-(package-initialize)
-(add-to-list 'load-path "~/.emacs.d/site-packages/")
-(setq package-enable-at-startup nil)
+(straight-use-package 'use-package)
 
 (server-start)
 
@@ -19,17 +17,14 @@
       calendar-standard-time-zone-name "EST"
       calendar-daylight-time-zone-name "EDT")
 
-(unless (assoc-default "melpa" package-archives)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t))
-
 (setq use-package-verbose t)
-(setq use-package-always-ensure t)
 (use-package auto-compile
   :straight t
   :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
 
-(use-package hydra)
+(use-package hydra
+:straight t)
 
 (use-package flycheck
   :straight t
@@ -38,7 +33,6 @@
 
 (use-package flycheck-clang-analyzer
   :straight t
-  :ensure t
   :after flycheck
   :config (flycheck-clang-analyzer-setup))
 
@@ -471,8 +465,8 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package pcomplete
   :straight t
   :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
-				 (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
-				 (my/remote-term hostname "ssh" hostname))))
+				       (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
+				       (my/remote-term hostname "ssh" hostname))))
 
 ;; (defun helm-source-ssh-remote-term ()
 ;;   (helm-build-sync-source "SSH hostname"
@@ -497,9 +491,9 @@ _SPC_ cancel    _o_nly this     _d_elete
   :straight t
   :bind (("<f9>" . ibuffer))
   :init (setq ibuffer-shrink-to-minimum-size t
-	ibuffer-always-show-last-buffer nil
-	ibuffer-sorting-mode 'recency
-	ibuffer-use-header-line t))
+	      ibuffer-always-show-last-buffer nil
+	      ibuffer-sorting-mode 'recency
+	      ibuffer-use-header-line t))
 
 (add-to-list 'vc-handled-backends 'GIT)
 
@@ -524,15 +518,6 @@ _SPC_ cancel    _o_nly this     _d_elete
   :straight t
   :init (setq magit-auto-revert-mode t)
   :bind (("C-x C-g" . magit-status)))
-
-(require 'tramp)
-(add-to-list 'tramp-methods
-             '("yadm"
-               (tramp-login-program "yadm")
-               (tramp-login-args (("enter")))
-               (tramp-login-env (("SHELL") ("/bin/sh")))
-               (tramp-remote-shell "/bin/sh")
-               (tramp-remote-shell-args ("-c"))))
 
 (use-package projectile
   :straight t
@@ -562,8 +547,8 @@ _SPC_ cancel    _o_nly this     _d_elete
   :bind (("M-g g" . avy-goto-line)))
 
 (defhydra hydra-goto-line (goto-map ""
-				    :pre (linum-mode 1)
-				    :post (linum-mode -1))
+				    :pre (display-line-numbers-mode 1)
+				    :post (display-line-numbers-mode -1))
   "goto-line"
   ("g" goto-line "go")
   ("m" set-mark-command "mark" :bind nil)
@@ -571,16 +556,13 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (use-package lacarte
   :straight t
-  :ensure nil
   :bind (("<f10>" . lacarte-execute-menu-command)))
 
 (use-package windmove
   :straight t
-  :ensure nil
   :init (windmove-default-keybindings))
 (use-package framemove
   :straight t
-  :ensure nil
   :init (setq framemove-hook-into-windmove t))
 (global-set-key "\M-o" 'other-window)
 
@@ -727,7 +709,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package ws-butler
   :straight t
-  :ensure t
   :init (add-hook 'prog-mode-hook #'ws-butler-mode))
 
 (setq require-final-newline 't)
@@ -819,7 +800,6 @@ _k_: previous error    _l_: last error
 
 (use-package slime
   :straight t
-  :ensure t
   :config (setq slime-contribs '(slime-fancy)
 		inferior-lisp-program "/usr/bin/sbcl"))
 
@@ -855,7 +835,6 @@ _k_: previous error    _l_: last error
   :straight t)
 (use-package markdown-mode
   :straight t
-  :ensure t
   :init (progn
 	  (add-hook 'markdown-mode-hook 'pandoc-mode)))
 

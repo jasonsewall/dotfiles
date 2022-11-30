@@ -56,13 +56,10 @@ Get early-init going, if not using emacs 27+
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 #+end_src
 
-Start packages and sources
-
-#+begin_src emacs-lisp :tangle yes
-  (package-initialize)
-  (add-to-list 'load-path "~/.emacs.d/site-packages/")
-  (setq package-enable-at-startup nil)
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (straight-use-package 'use-package)
 #+END_SRC
+
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (server-start)
@@ -99,16 +96,6 @@ Time zone
 
 ** Emacs initialization
 
-*** Add package sources
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (unless (assoc-default "melpa" package-archives)
-    (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t))
-#+END_SRC
-
-Use =M-x package-refresh-contents= to reload the list of packages
-after adding these for the first time.
-
 *** Add my elisp directory and other files
 
 Sometimes I load files outside the package system. As long as they're
@@ -116,7 +103,6 @@ in a directory in my =load-path=, Emacs can find them.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq use-package-verbose t)
-  (setq use-package-always-ensure t)
   (use-package auto-compile
     :straight t
     :config (auto-compile-on-load-mode))
@@ -127,7 +113,8 @@ in a directory in my =load-path=, Emacs can find them.
 *** Hydra
 Keybinding craziness
 #+begin_src emacs-lisp :tangle yes
-  (use-package hydra)
+  (use-package hydra
+  :straight t)
 #+end_src
 *** Flycheck
 
@@ -141,7 +128,6 @@ Keybinding craziness
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package flycheck-clang-analyzer
     :straight t
-    :ensure t
     :after flycheck
     :config (flycheck-clang-analyzer-setup))
 #+END_SRC
@@ -799,17 +785,6 @@ I don't know if this is actually necessary
     :init (setq magit-auto-revert-mode t)
     :bind (("C-x C-g" . magit-status)))
 #+end_src
-**** YADM
-#+begin_src emacs-lisp :tangle yes
-  (require 'tramp)
-  (add-to-list 'tramp-methods
-               '("yadm"
-                 (tramp-login-program "yadm")
-                 (tramp-login-args (("enter")))
-                 (tramp-login-env (("SHELL") ("/bin/sh")))
-                 (tramp-remote-shell "/bin/sh")
-                 (tramp-remote-shell-args ("-c"))))
-#+end_src
 *** Projects
 #+begin_src emacs-lisp :tangle yes
   (use-package projectile
@@ -843,8 +818,8 @@ I don't know if this is actually necessary
     :bind (("M-g g" . avy-goto-line)))
 
   (defhydra hydra-goto-line (goto-map ""
-				      :pre (linum-mode 1)
-				      :post (linum-mode -1))
+				      :pre (display-line-numbers-mode 1)
+				      :post (display-line-numbers-mode -1))
     "goto-line"
     ("g" goto-line "go")
     ("m" set-mark-command "mark" :bind nil)
@@ -856,7 +831,6 @@ Navigate menus via keyboard
 #+begin_src emacs-lisp :tangle yes
   (use-package lacarte
     :straight t
-    :ensure nil
     :bind (("<f10>" . lacarte-execute-menu-command)))
 #+end_src
 
@@ -865,11 +839,9 @@ Use arrow keys to switch windows (and frames, with X)
 #+begin_src emacs-lisp :tangle yes
   (use-package windmove
     :straight t
-    :ensure nil
     :init (windmove-default-keybindings))
   (use-package framemove
     :straight t
-    :ensure nil
     :init (setq framemove-hook-into-windmove t))
   (global-set-key "\M-o" 'other-window)
 #+end_src
@@ -1063,7 +1035,6 @@ Also, =visual-line-mode= is so much better than =auto-fill-mode=. It doesn't act
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ws-butler
     :straight t
-    :ensure t
     :init (add-hook 'prog-mode-hook #'ws-butler-mode))
 #+END_SRC
 
@@ -1202,7 +1173,6 @@ Add a hydra for navigating compilation logs
 #+begin_src emacs-lisp :tangle yes
   (use-package slime
     :straight t
-    :ensure t
     :config (setq slime-contribs '(slime-fancy)
 		  inferior-lisp-program "/usr/bin/sbcl"))
 #+end_src
@@ -1250,7 +1220,6 @@ Add a hydra for navigating compilation logs
     :straight t)
   (use-package markdown-mode
     :straight t
-    :ensure t
     :init (progn
 	    (add-hook 'markdown-mode-hook 'pandoc-mode)))
 #+end_src
