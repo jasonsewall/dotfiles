@@ -867,5 +867,9 @@ _k_: previous error    _l_: last error
 	  (setq plantuml-executable-path "/usr/bin/plantuml")
 	  (setq plantuml-default-exec-mode 'executable)))
 
+(use-package lua-mode
+  :straight t
+  :config (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode)))
+
 (provide 'dot-emacs)
 ;;; dot-emacs ends here

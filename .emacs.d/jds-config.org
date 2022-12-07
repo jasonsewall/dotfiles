@@ -1264,6 +1264,13 @@ New modern C setup!
 	    (setq plantuml-default-exec-mode 'executable)))
 #+end_src
 
+*** Lua
+#+begin_src emacs-lisp :tangle yes
+  (use-package lua-mode
+    :straight t
+    :config (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode)))
+#+end_src
+
 * Back Matter
 
 They say you need this:
