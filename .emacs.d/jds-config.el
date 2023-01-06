@@ -443,8 +443,8 @@ _SPC_ cancel    _o_nly this     _d_elete
   :straight t)
 
 (add-hook 'term-mode-hook
-	  (lambda ()
-	    (setq term-buffer-maximum-size 100000)))
+    (lambda ()
+      (setq term-buffer-maximum-size 100000)))
 
 ;; Use this for remote so I can specify command line arguments
 (defun my/remote-term (new-buffer-name cmd &rest switches)
@@ -465,8 +465,8 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package pcomplete
   :straight t
   :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
-				       (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
-				       (my/remote-term hostname "ssh" hostname))))
+                                       (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
+                                       (my/remote-term hostname "ssh" hostname))))
 
 ;; (defun helm-source-ssh-remote-term ()
 ;;   (helm-build-sync-source "SSH hostname"
@@ -491,9 +491,9 @@ _SPC_ cancel    _o_nly this     _d_elete
   :straight t
   :bind (("<f9>" . ibuffer))
   :init (setq ibuffer-shrink-to-minimum-size t
-	      ibuffer-always-show-last-buffer nil
-	      ibuffer-sorting-mode 'recency
-	      ibuffer-use-header-line t))
+              ibuffer-always-show-last-buffer nil
+              ibuffer-sorting-mode 'recency
+              ibuffer-use-header-line t))
 
 (add-to-list 'vc-handled-backends 'GIT)
 
@@ -725,25 +725,38 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package lsp-mode
   :straight t
   :diminish
+  :after rustic
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :hook ((c++-mode . lsp)
-	 (python-mode . lsp)
-	 (c-mode . lsp)
-	 ;; if you want which-key integration
-	 (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
+         (python-mode . lsp)
+         (c-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp
+  :custom
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-eldoc-render-all t)
+  (lsp-idle-delay 0.6)
+  ;; enable / disable the hints as you prefer:
+  (lsp-rust-analyzer-server-display-inlay-hints t)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-rust-analyzer-display-parameter-hints nil)
+  (lsp-rust-analyzer-display-reborrow-hints nil)
+  :config
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+
 (use-package lsp-ui
   :straight t
-  :commands lsp-ui-mode)
-
-(use-package tree-sitter
-  :straight t
-  :init
-  (global-tree-sitter-mode))
-(use-package tree-sitter-langs
-  :straight t)
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-enable nil))
 
 (setq org-src-window-setup 'current-window)
 
@@ -826,7 +839,21 @@ _k_: previous error    _l_: last error
   (lsp-pyright-typechecking-mode "off"))
 
 (use-package rustic
-  :straight t)
+  :straight t
+  :bind (:map rustic-mode-map
+              ("M-j" . lsp-ui-imenu)
+              ("M-?" . lsp-find-references)
+              ("C-c C-c l" . flycheck-list-errors)
+              ("C-c C-c a" . lsp-execute-code-action)
+              ("C-c C-c r" . lsp-rename)
+              ("C-c C-c q" . lsp-workspace-restart)
+              ("C-c C-c Q" . lsp-workspace-shutdown)
+              ("C-c C-c s" . lsp-rust-analyzer-status))
+  :custom
+  (setq rustic-lsp-server 'rust-analyzer)
+  (setq rustic-analyzer-command '("rustup run stable rust-analyzer"))
+  :config
+  (setq rustic-format-on-save t))
 
 (setq fortran-comment-region "!"
       fortran-line-length 200)
