@@ -81,9 +81,7 @@ Who I am
 Where I live
 
 #+begin_src emacs-lisp :tangle yes
-  (setq calendar-latitude 43.8951048
-        calendar-longitude -69.525429740
-        calendar-location-name "Pemaquid, ME")
+  (setq calendar-location-name "Pemaquid, ME")
 #+end_src
 
 Time zone

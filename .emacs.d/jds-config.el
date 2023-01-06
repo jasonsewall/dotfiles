@@ -9,9 +9,7 @@
 (setq user-full-name "Jason Sewall"
       user-mail-address "jasewall@nvidia.com")
 
-(setq calendar-latitude 43.8951048
-      calendar-longitude -69.525429740
-      calendar-location-name "Pemaquid, ME")
+(setq calendar-location-name "Pemaquid, ME")
 
 (setq calendar-time-zone (* 60 5)
       calendar-standard-time-zone-name "EST"
