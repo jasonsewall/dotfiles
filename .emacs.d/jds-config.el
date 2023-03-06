@@ -280,7 +280,7 @@ _SPC_ cancel    _o_nly this     _d_elete
             (consult-customize
              consult-ripgrep consult-grep
              consult-buffer consult-recent-file
-             :preview-key (kbd "M-."))
+             :preview-key "M-.")
 
             (defun vifon/orderless-fix-consult-tofu (pattern index total)
               "Ignore the last character which is hidden and used only internally."
