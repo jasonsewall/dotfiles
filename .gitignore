@@ -1,1 +1,3 @@
 *.~undo-tree~
+.dir-locals.el
+.projectile
