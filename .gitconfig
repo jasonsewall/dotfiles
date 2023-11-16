@@ -15,3 +15,5 @@
 	defaultBranch = main
 [core]
 	excludesfile = ~/.gitignore
+[url "ssh://git@gitlab-master.nvidia.com:12051/"]
+	insteadOf = https://gitlab-master.nvidia.com/
