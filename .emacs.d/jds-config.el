@@ -826,8 +826,56 @@ _k_: previous error    _l_: last error
 
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 
-(setq python-python-command "python3.10")
-(setq python-shell-interpreter "python3.10")
+(use-package conda
+  :straight t
+  :after python
+  :config
+  ;; taken from doom
+  ;; The location of your anaconda home will be guessed from a list of common
+  ;; possibilities, starting with `conda-anaconda-home''s default value (which
+  ;; will consult a ANACONDA_HOME envvar, if it exists).
+  ;;
+  ;; If none of these work for you, `conda-anaconda-home' must be set
+  ;; explicitly. Afterwards, run M-x `conda-env-activate' to switch between
+  ;; environments
+  (or (cl-loop for dir in (list conda-anaconda-home
+                                "~/.anaconda"
+                                "~/.miniconda"
+                                "~/.miniconda3"
+                                "~/.miniforge3"
+                                "~/anaconda3"
+                                "~/miniconda3"
+                                "~/miniforge3"
+                                "~/opt/miniconda3"
+                                "/usr/bin/anaconda3"
+                                "/usr/local/anaconda3"
+                                "/usr/local/miniconda3"
+                                "/usr/local/Caskroom/miniconda/base"
+                                "~/.conda")
+               if (file-directory-p dir)
+               return (setq conda-anaconda-home (expand-file-name dir)
+                            conda-env-home-directory (expand-file-name dir)))
+      (message "Cannot find Anaconda installation"))
+  ;; integration with term/eshell
+  (conda-env-initialize-interactive-shells)
+  (add-to-list 'global-mode-string
+               '(conda-env-current-name (" conda:" conda-env-current-name " "))
+               'append))
+
+(use-package pyvenv
+  :straight t
+  :after python
+  :config
+  (add-hook 'python-mode-local-vars-hook #'pyvenv-track-virtualenv)
+  (add-to-list 'global-mode-string
+               '(pyvenv-virtual-env-name (" venv:" pyvenv-virtual-env-name " "))
+               'append))
+
+(use-package apheleia
+  :straight (apheleia
+             :type git
+             :host github
+             :repo "radian-software/apheleia"))
 
 (use-package lsp-pyright
   :straight t
