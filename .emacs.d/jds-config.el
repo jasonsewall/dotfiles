@@ -720,42 +720,6 @@ point reaches the beginning or end of the buffer, stop there."
     (setq undo-tree-visualizer-timestamps t)
     (setq undo-tree-visualizer-diff t)))
 
-(use-package lsp-mode
-  :straight t
-  :diminish
-  :after rustic
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :hook ((c++-mode . lsp)
-         (python-mode . lsp)
-         (c-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp
-  :custom
-  (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-eldoc-render-all t)
-  (lsp-idle-delay 0.6)
-  ;; enable / disable the hints as you prefer:
-  (lsp-rust-analyzer-server-display-inlay-hints t)
-  (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
-  (lsp-rust-analyzer-display-chaining-hints t)
-  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
-  (lsp-rust-analyzer-display-closure-return-type-hints t)
-  (lsp-rust-analyzer-display-parameter-hints nil)
-  (lsp-rust-analyzer-display-reborrow-hints nil)
-  :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
-
-(use-package lsp-ui
-  :straight t
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-peek-always-show t)
-  (lsp-ui-sideline-show-hover t)
-  (lsp-ui-doc-enable nil))
-
 (setq org-src-window-setup 'current-window)
 
 (defun my/copy-code-as-org-block-and-gist (beg end)
@@ -826,6 +790,12 @@ _k_: previous error    _l_: last error
 
 (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 
+(use-package python
+  :straight t
+    :hook ((python-ts-mode . eglot-ensure)
+           (python-ts-mode . company-mode))
+    :mode (("\\.py\\'" . python-ts-mode)))
+
 (use-package conda
   :straight t
   :after python
@@ -876,13 +846,6 @@ _k_: previous error    _l_: last error
              :type git
              :host github
              :repo "radian-software/apheleia"))
-
-(use-package lsp-pyright
-  :straight t
-  :after lsp-mode
-  :custom
-  (lsp-pyright-auto-import-completions nil)
-  (lsp-pyright-typechecking-mode "off"))
 
 (use-package rustic
   :straight t

@@ -1059,53 +1059,6 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 
 ** Editing modes
 *** Semantic support
-**** lsp-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package lsp-mode
-    :straight t
-    :diminish
-    :after rustic
-    :init
-    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-    (setq lsp-keymap-prefix "C-c l")
-    :hook ((c++-mode . lsp)
-           (python-mode . lsp)
-           (c-mode . lsp)
-           ;; if you want which-key integration
-           (lsp-mode . lsp-enable-which-key-integration))
-    :commands lsp
-    :custom
-    (lsp-rust-analyzer-cargo-watch-command "clippy")
-    (lsp-eldoc-render-all t)
-    (lsp-idle-delay 0.6)
-    ;; enable / disable the hints as you prefer:
-    (lsp-rust-analyzer-server-display-inlay-hints t)
-    (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
-    (lsp-rust-analyzer-display-chaining-hints t)
-    (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
-    (lsp-rust-analyzer-display-closure-return-type-hints t)
-    (lsp-rust-analyzer-display-parameter-hints nil)
-    (lsp-rust-analyzer-display-reborrow-hints nil)
-    :config
-    (add-hook 'lsp-mode-hook 'lsp-ui-mode))
-
-  (use-package lsp-ui
-    :straight t
-    :commands lsp-ui-mode
-    :custom
-    (lsp-ui-peek-always-show t)
-    (lsp-ui-sideline-show-hover t)
-    (lsp-ui-doc-enable nil))
-#+END_SRC
-*** Tree-sitter
-// #+BEGIN_SRC emacs-lisp :tangle yes
-  // (use-package tree-sitter
-  //   :straight t
-  //   :init
-  //   (global-tree-sitter-mode))
-  // (use-package tree-sitter-langs
-  //   :straight t)
-// #+END_SRC
 *** Literate programming
 **** Editing source code
 I don't want to get distracted by the same code in the other window, so I want org src to use the current window.
@@ -1209,6 +1162,14 @@ Add a hydra for navigating compilation logs
   (global-set-key (kbd "C-x C-e") 'my/eval-and-replace)
 #+end_src
 *** Python
+**** TS-mode
+#+begin_src emacs-lisp :tangle yes
+  (use-package python
+    :straight t
+      :hook ((python-ts-mode . eglot-ensure)
+             (python-ts-mode . company-mode))
+      :mode (("\\.py\\'" . python-ts-mode)))
+#+end_src
 **** Conda
 #+begin_src emacs-lisp :tangle yes
 (use-package conda
@@ -1267,15 +1228,6 @@ Add a hydra for navigating compilation logs
              :type git
              :host github
              :repo "radian-software/apheleia"))
-#+end_src
-**** Python lsp-mode
-#+begin_src emacs-lisp :tangle yes
-  (use-package lsp-pyright
-    :straight t
-    :after lsp-mode
-    :custom
-    (lsp-pyright-auto-import-completions nil)
-    (lsp-pyright-typechecking-mode "off"))
 #+end_src
 *** Rust
 #+begin_src emacs-lisp :tangle yes
