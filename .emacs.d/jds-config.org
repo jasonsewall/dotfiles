@@ -101,7 +101,7 @@ in a directory in my =load-path=, Emacs can find them.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq use-package-verbose t)
-  (use-package auto-compile*** Hydra
+  (use-package auto-compile
     :straight t
     :config (auto-compile-on-load-mode))
   (setq load-prefer-newer t)
@@ -673,8 +673,8 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package eglot
     :straight t
-    :init (add-to-list 'eglot-server-programs
-                       '(c-mode c++-mode
+    :config (add-to-list 'eglot-server-programs
+                       '(c-mode c++-mode cuda-mode
                                 . ("clangd"
                                    "-j=4"
                                    "--malloc-trim"
@@ -750,6 +750,18 @@ This lets me open up terminals. I wish I could get this to work with tramp.
     (ansi-term "bash" "localhost"))
 #+end_src
 
+**** Eat
+#+begin_src emacs-lisp :tangle yes
+(straight-use-package
+ '(eat :type git
+       :host codeberg
+       :repo "akib/emacs-eat"
+       :files ("*.el" ("term" "term/*.el") "*.texi"
+               "*.ti" ("terminfo/e" "terminfo/e/*")
+               ("terminfo/65" "terminfo/65/*")
+               ("integration" "integration/*")
+               (:exclude ".dir-locals.el" "*-tests.el"))))
+#+end_src
 **** Customize shells
 #+begin_src emacs-lisp :tangle yes
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
@@ -1308,7 +1320,9 @@ New modern C setup!
   (use-package cuda-mode
     :straight t
     :init (progn
-	    (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+      (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+
+  (add-hook 'cuda-mode-hook #'eglot-ensure)
 #+end_src
 
 *** PlantUML

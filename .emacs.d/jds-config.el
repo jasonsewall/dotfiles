@@ -433,6 +433,22 @@ _SPC_ cancel    _o_nly this     _d_elete
   :straight t
   :config (powerline-default-theme))
 
+(use-package eglot
+  :straight t
+  :config (add-to-list 'eglot-server-programs
+                     '(c-mode c++-mode cuda-mode
+                              . ("clangd"
+                                 "-j=4"
+                                 "--malloc-trim"
+                                 "--log=error"
+                                 "--background-index"
+                                 "--clang-tidy"
+                                 "--cross-file-rename"
+                                 "--completion-style=detailed"
+                                 "--pch-storage=memory"
+                                 "--header-insertion=never"
+                                 "--header-insertion-decorators=0"))))
+
 (use-package tramp
   :straight (:type built-in)
   :init (setq tramp-unified-filename t))
@@ -481,6 +497,16 @@ _SPC_ cancel    _o_nly this     _d_elete
 (defun my/local-term ()
   (interactive)
   (ansi-term "bash" "localhost"))
+
+(straight-use-package
+ '(eat :type git
+       :host codeberg
+       :repo "akib/emacs-eat"
+       :files ("*.el" ("term" "term/*.el") "*.texi"
+               "*.ti" ("terminfo/e" "terminfo/e/*")
+               ("terminfo/65" "terminfo/65/*")
+               ("integration" "integration/*")
+               (:exclude ".dir-locals.el" "*-tests.el"))))
 
 (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 (add-hook 'comint-output-filter-functions 'comint-watch-for-password-prompt)
@@ -874,11 +900,8 @@ _k_: previous error    _l_: last error
   :init (progn
 	  (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
-(setq c-default-style "bsd"
-      c-basic-offset 2
-      indent-tabs-mode nil)
-
-(c-set-offset 'cpp-macro 0 nil)
+(add-hook 'c-mode-hook #'eglot-ensure)
+(add-hook 'c++-mode-hook #'eglot-ensure)
 
 (add-hook 'c++-mode-hook '(lambda ()
                             (define-key c++-mode-map "\C-cf" 'align-current)))
@@ -895,7 +918,9 @@ _k_: previous error    _l_: last error
 (use-package cuda-mode
   :straight t
   :init (progn
-	  (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+    (add-to-list 'auto-mode-alist '("\\.cuh\\'" . cuda-mode))))
+
+(add-hook 'cuda-mode-hook #'eglot-ensure)
 
 (use-package plantuml-mode
   :straight t
