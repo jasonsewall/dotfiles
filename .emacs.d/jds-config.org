@@ -674,18 +674,20 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
   (use-package eglot
     :straight t
     :config (add-to-list 'eglot-server-programs
-                       '(c-mode c++-mode cuda-mode
-                                . ("clangd"
-                                   "-j=4"
-                                   "--malloc-trim"
-                                   "--log=error"
-                                   "--background-index"
-                                   "--clang-tidy"
-                                   "--cross-file-rename"
-                                   "--completion-style=detailed"
-                                   "--pch-storage=memory"
-                                   "--header-insertion=never"
-                                   "--header-insertion-decorators=0"))))
+                         '(c-mode c++-mode cuda-mode
+                                  . ("clangd"
+                                     "-j=4"
+                                     "--malloc-trim"
+                                     "--log=error"
+                                     "--background-index"
+                                     "--clang-tidy"
+                                     "--cross-file-rename"
+                                     "--completion-style=detailed"
+                                     "--pch-storage=memory"
+                                     "--header-insertion=never"
+                                     "--header-insertion-decorators=0"))
+                         '(python-ts-mode . ("ruff" "server"))))
+
 #+END_SRC
 
 ** System stuff

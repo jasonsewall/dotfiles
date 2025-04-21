@@ -436,18 +436,19 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package eglot
   :straight t
   :config (add-to-list 'eglot-server-programs
-                     '(c-mode c++-mode cuda-mode
-                              . ("clangd"
-                                 "-j=4"
-                                 "--malloc-trim"
-                                 "--log=error"
-                                 "--background-index"
-                                 "--clang-tidy"
-                                 "--cross-file-rename"
-                                 "--completion-style=detailed"
-                                 "--pch-storage=memory"
-                                 "--header-insertion=never"
-                                 "--header-insertion-decorators=0"))))
+                       '(c-mode c++-mode cuda-mode
+                                . ("clangd"
+                                   "-j=4"
+                                   "--malloc-trim"
+                                   "--log=error"
+                                   "--background-index"
+                                   "--clang-tidy"
+                                   "--cross-file-rename"
+                                   "--completion-style=detailed"
+                                   "--pch-storage=memory"
+                                   "--header-insertion=never"
+                                   "--header-insertion-decorators=0"))
+                       '(python-ts-mode . ("ruff" "server"))))
 
 (use-package tramp
   :straight (:type built-in)
