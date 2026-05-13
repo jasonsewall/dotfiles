@@ -1,5 +1,6 @@
 #+Title: Jason Sewall's Emacs config
 #+OPTIONS: toc:4 h:4
+#+PROPERTY: header-args:emacs-lisp :tangle init.el
 
 
 * Configuration
@@ -44,21 +45,20 @@ use it to group together package-related config without lots of
 =with-eval-after-load= calls, and it also makes declaring keybindings
 easier.
 
-My =~/.emacs.d/init.el= is now a symlink to =jds-config.el=, which is
-what =M-x org-babel-tangle= (=C-c C-v t=) produces. I create
-=jds-config.el= via =org-babel-tangle=.
+=~/.emacs.d/init.el= is tangled directly from this file via
+=org-babel-tangle= (=C-c C-v t=). See the auto-tangle hook below.
 
 ** Starting up
 
 Get early-init going, if not using emacs 27+
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 #+end_src
 
 Auto-tangle this file on save so I never have to remember =C-c C-v t=.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun jds/tangle-jds-config-on-save ()
     "Tangle `jds-config.org' when it is saved."
     (when (equal (buffer-file-name)
@@ -70,37 +70,35 @@ Auto-tangle this file on save so I never have to remember =C-c C-v t=.
   (add-hook 'after-save-hook #'jds/tangle-jds-config-on-save)
 #+end_src
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (straight-use-package 'use-package)
 #+END_SRC
 
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (server-start)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq inhibit-startup-message t)
+#+BEGIN_SRC emacs-lisp
+  (require 'server)
+  (unless (server-running-p)
+    (server-start))
 #+END_SRC
 
 ** Personal information
 
 Who I am
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (setq user-full-name "Jason Sewall"
         user-mail-address "jasewall@nvidia.com")
 #+END_SRC
 
 Where I live
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (setq calendar-location-name "Pemaquid, ME")
 #+end_src
 
 Time zone
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (setq calendar-time-zone (* 60 5)
         calendar-standard-time-zone-name "EST"
         calendar-daylight-time-zone-name "EDT")
@@ -108,14 +106,50 @@ Time zone
 
 ** Emacs initialization
 
-*** Add my elisp directory and other files
+*** Built-in defaults
 
-Sometimes I load files outside the package system. As long as they're
-in a directory in my =load-path=, Emacs can find them.
+One consolidated =(use-package emacs ...)= block for the
+plain-old-settings that don't belong to a specific package: backups,
+indentation, diffs, encoding, etc. Modes and per-package settings
+stay in their own sections below.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq use-package-verbose t)
-  (setq load-prefer-newer t)
+#+BEGIN_SRC emacs-lisp
+  (use-package emacs
+    :straight (:type built-in)
+    :init
+    (setq use-package-verbose t
+          load-prefer-newer t
+          inhibit-startup-message t
+          ;; Backups
+          backup-directory-alist '(("." . "~/.emacs.d/backups"))
+          delete-old-versions -1
+          version-control t
+          vc-make-backup-files t
+          auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t))
+          ;; Uniquify
+          uniquify-buffer-name-style 'reverse
+          uniquify-after-kill-buffer-p t
+          ;; Editing
+          sentence-end-double-space t
+          require-final-newline t
+          read-quoted-char-radix 16
+          ;; Diffs
+          diff-switches "-u"
+          vc-diff-switches '("-b" "-B" "-u")
+          vc-git-diff-switches nil
+          vc-follow-symlinks t
+          ;; Font lock
+          font-lock-maximum-decoration t)
+    (setq-default tab-width 2
+                  indent-tabs-mode nil)
+    :config
+    (column-number-mode 1)
+    (display-time-mode 1)
+    (show-paren-mode 1)
+    (global-font-lock-mode 1)
+    (tool-bar-mode -1)
+    (scroll-bar-mode -1)
+    (fset 'yes-or-no-p 'y-or-n-p))
 #+END_SRC
 
 ** General configuration
@@ -123,7 +157,7 @@ in a directory in my =load-path=, Emacs can find them.
 (set-frame-font "Hack" nil t)
 *** Hydra
 Keybinding craziness
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package hydra
   :straight t)
 #+end_src
@@ -131,7 +165,7 @@ Keybinding craziness
 Built-in syntax checker. Eglot turns this on automatically in LSP
 buffers; we also enable it in prog-mode for non-LSP buffers (elisp,
 etc.).
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package flymake
     :straight (:type built-in)
     :hook (prog-mode . flymake-mode)
@@ -142,7 +176,7 @@ etc.).
 #+END_SRC
 
 *** Key-chord
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package key-chord
     :straight t
     :init (key-chord-mode 1))
@@ -150,61 +184,34 @@ etc.).
 
 *** Libraries
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package dash
     :straight t)
 #+end_src
 
-*** Backups
-
-This is one of the things people usually want to change right away. By default, Emacs saves backup files in the current directory. These are the files ending in =~= that are cluttering up your directory lists. The following code stashes them all in =~/.emacs.d/backups=, where I can find them with =C-x C-f= (=find-file=) if I really need to.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-#+END_SRC
-
-Disk space is cheap. Save lots.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq delete-old-versions -1)
-  (setq version-control t)
-  (setq vc-make-backup-files t)
-  (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
-#+END_SRC
-
 *** History
-From http://www.wisdomandwonder.com/wp-content/uploads/2014/03/C3F.html:
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq savehist-file "~/.emacs.d/savehist")
+Savehist persists minibuffer/kill-ring history across sessions.
+#+BEGIN_SRC emacs-lisp
+  (setq savehist-file "~/.emacs.d/savehist"
+        history-length t
+        history-delete-duplicates t
+        savehist-save-minibuffer-history 1
+        savehist-additional-variables
+        '(kill-ring search-ring regexp-search-ring))
   (savehist-mode 1)
-  (setq history-length t)
-  (setq history-delete-duplicates t)
-  (setq savehist-save-minibuffer-history 1)
-  (setq savehist-additional-variables
-        '(kill-ring
-          search-ring
-          regexp-search-ring))
 #+END_SRC
-*** Uniquify
-
-Some sanity if we open files with the same name.
-
-#+begin_src emacs-lisp :tangle yes
-  (setq uniquify-buffer-name-style 'reverse
-        uniquify-after-kill-buffer-p t)
-#+end_src
 *** Desktop
 
 Save sesions
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (desktop-save-mode 1)
   (setq desktop-restore-eager 10)
 #+END_SRC
 
 Handy hydra for desktop
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defhydra hydra-desktop (:color blue)
     "desktop"
     ("c" desktop-clear "clear")
@@ -215,39 +222,25 @@ Handy hydra for desktop
 
 *** Windows configuration
 
-Don't give up screen space; we don't need these
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-#+END_SRC
-
 Don't let butterfingers kill it
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (when window-system
     (global-unset-key "\C-z"))
   (when window-system
     (global-unset-key "\C-x\C-z"))
 #+END_SRC
 
-Informative minibuffer
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (column-number-mode 1)
-  (display-time)
-#+END_SRC
-
 Make it harder to accidentally quit
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (global-unset-key "\C-x\C-c")
   (global-set-key "\C-x\C-c\C-v" 'save-buffers-kill-emacs)
 #+END_SRC
 
 Helpful names
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (setq frame-title-format
         (concat  "emacs@" (system-name)))
   (unless window-system
@@ -256,7 +249,7 @@ Helpful names
 
 **** Winner
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package ace-window
     :straight t)
   (defhydra hydra-window (global-map "C-x w")
@@ -324,7 +317,7 @@ Helpful names
 
 I got this from here: https://codeberg.org/vifon/emacs-config/src/branch/master/emacs.d/lisp/20-completing-read.el
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
 ;;; -*- lexical-binding: t; -*-
 
 (use-package vertico
@@ -533,19 +526,11 @@ I got this from here: https://codeberg.org/vifon/emacs-config/src/branch/master/
                        args)))
 #+END_SRC
 
-*** Change "yes or no" to "y or n"
-
-Lazy people like me never want to type "yes" when "y" will suffice.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (fset 'yes-or-no-p 'y-or-n-p)
-#+END_SRC
-
 *** Appearances
 
 Theme
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package zenburn-theme
     :straight t
     :init
@@ -556,30 +541,18 @@ Theme
 #+END_SRC
 
 Enable visual feedback on selections
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (setq transient-mark-mode t)
-#+END_SRC
-
-Maximum colors
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (global-font-lock-mode t)
-  (setq font-lock-maximum-decoration t)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (show-paren-mode t)
 #+END_SRC
 
 *** Unicode
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (prefer-coding-system 'utf-8)
   (setq-default buffer-file-coding-system 'utf-8-unix)
   (set-default-coding-systems 'utf-8-unix)
   (setq-default default-buffer-file-coding-system 'utf-8-unix)
   (define-coding-system-alias 'UTF-8 'utf-8)
-  (setq read-quoted-char-radix 16)
 
   (defmacro my/insert-unicode (unicode-name)
     `(lambda () (interactive)
@@ -589,29 +562,20 @@ Maximum colors
     (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
 #+END_SRC
 
-*** Sentences end with a two spaces
-
-Sentences end with a two spaces. This makes
-sentence navigation commands work for me.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq sentence-end-double-space t)
-#+END_SRC
-
 *** Expand
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (bind-key "M-/" 'hippie-expand)
 #+END_SRC
 
 From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el - Exclude very large buffers from dabbrev
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (defun sanityinc/dabbrev-friend-buffer (other-buffer)
     (< (buffer-size other-buffer) (* 1 1024 1024)))
   (setq dabbrev-friend-buffer-function 'sanityinc/dabbrev-friend-buffer)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (setq hippie-expand-try-functions-list
         '(try-expand-all-abbrevs
           try-complete-file-name-partially
@@ -627,7 +591,7 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 
 *** Diminish
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package diminish
     :straight t
     :init (diminish 'eldoc-mode))
@@ -635,7 +599,7 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 
 *** Eglot
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package eglot
     :straight t
     :config
@@ -660,7 +624,7 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 ** System stuff
 *** Tramp
 Real handy when working on remote machines
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package tramp
     :straight (:type built-in)
     :init (setq tramp-unified-filename t))
@@ -670,7 +634,7 @@ Real handy when working on remote machines
 
 This lets me open up terminals. I wish I could get this to work with tramp.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (add-hook 'term-mode-hook
       (lambda ()
         (setq term-buffer-maximum-size 100000)))
@@ -715,7 +679,7 @@ This lets me open up terminals. I wish I could get this to work with tramp.
 #+end_src
 
 **** Eat
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
 (straight-use-package
  '(eat :type git
        :host codeberg
@@ -727,12 +691,12 @@ This lets me open up terminals. I wish I could get this to work with tramp.
                (:exclude ".dir-locals.el" "*-tests.el"))))
 #+end_src
 **** Customize shells
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
   (add-hook 'comint-output-filter-functions 'comint-watch-for-password-prompt)
 #+end_src
 *** Ibuffer
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package ibuffer
     :straight (:type built-in)
     :bind (("<f9>" . ibuffer))
@@ -744,21 +708,17 @@ This lets me open up terminals. I wish I could get this to work with tramp.
 ** Projects & version control
 *** Git
 I don't know if this is actually necessary
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (add-to-list 'vc-handled-backends 'GIT)
 #+end_src
-
-#+begin_src emacs-lisp :tangle yes
-  (setq vc-follow-symlinks t)
-#+end_src
 *** Git-link
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package git-link
     :straight t
     :init (global-set-key (kbd "C-c m l") 'git-link))
 #+end_src
 *** YADM
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (add-to-list 'tramp-methods
                '("yadm"
                  (tramp-login-program "yadm")
@@ -766,14 +726,8 @@ I don't know if this is actually necessary
                  (tramp-remote-shell "/bin/sh")
                  (tramp-remote-shell-args ("-c"))))
 #+end_src
-*** Nice diffs
-#+begin_src emacs-lisp :tangle yes
-  (setq diff-switches "-u")
-  (setq vc-diff-switches '("-b" "-B" "-u"))
-  (setq vc-git-diff-switches nil)
-#+end_src
 *** Magit
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package magit
     :straight t
     :init (setq magit-auto-revert-mode t)
@@ -783,13 +737,13 @@ I don't know if this is actually necessary
 Use the built-in =project.el=. Standard prefix is =C-x p= (e.g. =C-x p
 f= find file in project, =C-x p g= grep, =C-x p p= switch project).
 =consult-buffer= and =magit= integrate with this natively.
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package project
     :straight (:type built-in))
 #+end_src
 ** Navigation & Search
 *** Go to line
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (global-set-key "\C-cg" 'goto-line)
 
   (use-package avy
@@ -814,20 +768,20 @@ f= find file in project, =C-x p g= grep, =C-x p p= switch project).
 #+end_src
 *** Menu bar via keyboard
 Navigate menus via keyboard using consult.
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (global-set-key (kbd "<f10>") #'consult-menu-bar)
 #+end_src
 
 *** Window movement
 Use arrow keys to switch windows.
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package windmove
     :straight (:type built-in)
     :init (windmove-default-keybindings))
   (global-set-key "\M-o" 'other-window)
 #+end_src
 *** Move to start
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my/smarter-move-beginning-of-line (arg)
     "Move point back to indentation of beginning of line.
 
@@ -856,13 +810,13 @@ Use arrow keys to switch windows.
                   'my/smarter-move-beginning-of-line)
 #+end_src
 *** Ripgrep
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package rg
     :straight t
     :init (rg-enable-default-bindings))
 #+end_src
 *** Phi-search
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package phi-search
     :straight t
     :diminish phi-search
@@ -873,28 +827,28 @@ Use arrow keys to switch windows.
 #+end_src
 ** Editing tricks
 *** Yasnippet
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package yasnippet
     :straight t
     :init (yas-global-mode 1))
 #+end_src
 
 *** Which Key
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package which-key
     :straight t
     :init (which-key-mode))
 #+end_src
 
 *** Aggresive indentation
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package aggressive-indent
     :straight t)
 #+end_src
 
 *** Multiple cursors
 So powerful
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package multiple-cursors
     :straight t
     :init (defhydra multiple-cursors-hydra (global-map "C-x m")
@@ -930,14 +884,14 @@ So powerful
 #+end_src
 
 *** Expand region
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package expand-region
     :straight t
     :defer t
     :bind (("M-2" . er/expand-region)))
 #+end_src
 *** Transpose, but keep whitespace
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my/forward-transpose-whitespace (begin end)
     "If mark is active, swap leading whitespace with region between
         point and mark. If mark isn't active, find the first
@@ -962,7 +916,7 @@ So powerful
 #+end_src
 *** Unfill paragraph
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (defun my/unfill-paragraph (&optional region)
     "Takes a multi-line paragraph and makes it into a single line of text."
     (interactive (progn
@@ -977,7 +931,7 @@ I never actually justify text, so I might as well change the way
 =fill-paragraph= works. With the code below, =M-q= will fill the
 paragraph normally, and =C-u M-q= will unfill it.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (defun my/fill-or-unfill-paragraph (&optional unfill region)
     "Fill paragraph (or REGION).
     With the prefix argument UNFILL, unfill it instead."
@@ -991,29 +945,26 @@ paragraph normally, and =C-u M-q= will unfill it.
 
 Also, =visual-line-mode= is so much better than =auto-fill-mode=. It doesn't actually break the text into multiple lines - it only looks that way.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (remove-hook 'text-mode-hook #'turn-on-auto-fill)
   (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
 #+END_SRC
 
 *** Whitespace
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (bind-key "M-SPC" 'cycle-spacing)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (add-hook 'before-save-hook 'delete-trailing-whitespace)
-#+END_SRC
+=ws-butler= trims trailing whitespace, but only on lines you've
+actually edited — so diffs stay focused. Don't combine with a global
+=delete-trailing-whitespace= on =before-save-hook=; that defeats the
+surgical behavior.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package ws-butler
     :straight t
-    :init (add-hook 'prog-mode-hook #'ws-butler-mode))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq require-final-newline 't)
+    :hook (prog-mode . ws-butler-mode))
 #+END_SRC
 
 *** Undo tree mode - visualize your undos and branches
@@ -1022,7 +973,7 @@ People often struggle with the Emacs undo model, where there's really no concept
 
 This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the changes you've made, undo back to a certain point (or redo), and go down different branches.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (use-package undo-tree
     :straight t
     :diminish undo-tree-mode
@@ -1039,13 +990,13 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 **** Editing source code
 I don't want to get distracted by the same code in the other window, so I want org src to use the current window.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (setq org-src-window-setup 'current-window)
 #+end_src
 
 **** Copying and sharing code
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my/copy-code-as-org-block-and-gist (beg end)
     (interactive "r")
     (let ((filename (file-name-base))
@@ -1060,21 +1011,11 @@ I don't want to get distracted by the same code in the other window, so I want o
                contents))))
 #+end_src
 
-*** Tab width of 2
-#+begin_src emacs-lisp :tangle yes
-  (setq-default tab-width 2)
-#+end_src
-
-*** Never use tabs
-#+begin_src emacs-lisp :tangle yes
-  (setq-default indent-tabs-mode nil)
-#+end_src
-
 *** Compilation
 
 Use C-c C-m to compile
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package compile
     :straight (:type built-in)
     :init (progn
@@ -1088,7 +1029,7 @@ Use C-c C-m to compile
 
 Add a hydra for navigating compilation logs
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defhydra hydra-next-error
     (global-map "C-x")
     "
@@ -1109,7 +1050,7 @@ Add a hydra for navigating compilation logs
 #+end_src
 
 *** LaTeX
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package auctex
     :straight t
     :defer t
@@ -1117,14 +1058,14 @@ Add a hydra for navigating compilation logs
 		   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 #+end_src
 *** Common Lisp
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package slime
     :straight t
     :config (setq slime-contribs '(slime-fancy)
 		  inferior-lisp-program "/usr/bin/sbcl"))
 #+end_src
 *** Elisp
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my/eval-and-replace ()
     "Replace the preceding sexp with its value."
     (interactive)
@@ -1139,14 +1080,14 @@ Add a hydra for navigating compilation logs
 #+end_src
 *** Python
 **** TS-mode
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package python
     :straight (:type built-in)
     :hook (python-ts-mode . eglot-ensure)
     :mode (("\\.py\\'" . python-ts-mode)))
 #+end_src
 **** Conda
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
 (use-package conda
   :straight t
   :after python
@@ -1186,7 +1127,7 @@ Add a hydra for navigating compilation logs
 **** pyenv
  To hopefully work better with virtual environments over tramp
  to test if works with conda (and tramp really)
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
 (use-package pyvenv
   :straight t
   :after python
@@ -1197,7 +1138,7 @@ Add a hydra for navigating compilation logs
                'append))
 #+end_src
 **** apheleia for formatting
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
 (use-package apheleia
   :straight (apheleia
              :type git
@@ -1205,7 +1146,7 @@ Add a hydra for navigating compilation logs
              :repo "radian-software/apheleia"))
 #+end_src
 *** Rust
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package rustic
     :straight t
     :bind (:map rustic-mode-map
@@ -1224,12 +1165,12 @@ Add a hydra for navigating compilation logs
     (setq rustic-format-on-save t))
 #+end_src
 *** Fortran
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (setq fortran-comment-region "!"
         fortran-line-length 200)
 #+end_src
 *** Markdown
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package pandoc-mode
     :straight t)
   (use-package markdown-mode
@@ -1241,7 +1182,7 @@ Add a hydra for navigating compilation logs
 
 New modern C setup!
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (add-hook 'c-mode-hook #'eglot-ensure)
   (add-hook 'c++-mode-hook #'eglot-ensure)
 
@@ -1259,7 +1200,7 @@ New modern C setup!
 #+end_src
 
 *** CUDA
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package cuda-mode
     :straight t
     :init (progn
@@ -1269,7 +1210,7 @@ New modern C setup!
 #+end_src
 
 *** PlantUML
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package plantuml-mode
     :straight t
     :init (progn
@@ -1278,7 +1219,7 @@ New modern C setup!
 #+end_src
 
 *** Lua
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (use-package lua-mode
     :straight t
     :config (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode)))
@@ -1288,7 +1229,7 @@ New modern C setup!
 
 They say you need this:
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (provide 'dot-emacs)
   ;;; dot-emacs ends here
 #+end_src
