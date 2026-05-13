@@ -115,9 +115,6 @@ in a directory in my =load-path=, Emacs can find them.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq use-package-verbose t)
-  (use-package auto-compile
-    :straight t
-    :config (auto-compile-on-load-mode))
   (setq load-prefer-newer t)
 #+END_SRC
 
@@ -130,20 +127,18 @@ Keybinding craziness
   (use-package hydra
   :straight t)
 #+end_src
-*** Flycheck
-
+*** Flymake
+Built-in syntax checker. Eglot turns this on automatically in LSP
+buffers; we also enable it in prog-mode for non-LSP buffers (elisp,
+etc.).
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package flycheck
-    :straight t
-    :diminish
-    :init (add-hook 'after-init-hook #'global-flycheck-mode))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package flycheck-clang-analyzer
-    :straight t
-    :after flycheck
-    :config (flycheck-clang-analyzer-setup))
+  (use-package flymake
+    :straight (:type built-in)
+    :hook (prog-mode . flymake-mode)
+    :bind (:map flymake-mode-map
+           ("M-n" . flymake-goto-next-error)
+           ("M-p" . flymake-goto-prev-error)
+           ("C-c ! l" . flymake-show-buffer-diagnostics)))
 #+END_SRC
 
 *** Key-chord
@@ -538,36 +533,12 @@ I got this from here: https://codeberg.org/vifon/emacs-config/src/branch/master/
                        args)))
 #+END_SRC
 
-*** Mode line format
-
-Display a more compact mode line
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package smart-mode-line
-    :straight t)
-#+END_SRC
-
 *** Change "yes or no" to "y or n"
 
 Lazy people like me never want to type "yes" when "y" will suffice.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (fset 'yes-or-no-p 'y-or-n-p)
-#+END_SRC
-
-*** Minibuffer editing - more space!
-
-Sometimes you want to be able to do fancy things with the text
-that you're entering into the minibuffer. Sometimes you just want
-to be able to read it, especially when it comes to lots of text.
-This binds =C-M-e= in a minibuffer) so that you can edit the
-contents of the minibuffer before submitting it.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package miniedit
-    :straight t
-    :commands minibuffer-edit
-    :init (miniedit-install))
 #+END_SRC
 
 *** Appearances
@@ -598,21 +569,6 @@ Maximum colors
 
 #+BEGIN_SRC emacs-lisp :tangle yes
   (show-paren-mode t)
-#+END_SRC
-
-*** Help - guide-key
-
-It's hard to remember keyboard shortcuts. The =guide-key= package pops up help after a short delay.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package guide-key
-    :straight t
-    :defer t
-    :diminish guide-key-mode
-    :config
-    (progn
-      (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-c"))
-      (guide-key-mode 1)))  ; Enable guide-key-mode
 #+END_SRC
 
 *** Unicode
@@ -677,13 +633,6 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
     :init (diminish 'eldoc-mode))
 #+END_SRC
 
-*** Powerline
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package powerline
-    :straight t
-    :config (powerline-default-theme))
-#+END_SRC
 *** Eglot
 
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -716,11 +665,6 @@ Real handy when working on remote machines
     :straight (:type built-in)
     :init (setq tramp-unified-filename t))
 #+end_src
-**** Tramp-term
-#+begin_src emacs-lisp :tangle yes
-  (use-package tramp-term
-    :straight t)
-#+end_src
 *** Shells
 **** Remote term access
 
@@ -748,7 +692,7 @@ This lets me open up terminals. I wish I could get this to work with tramp.
     (switch-to-buffer term-ansi-buffer-name))
 
   (use-package pcomplete
-    :straight t
+    :straight (:type built-in)
     :init (progn (require 'pcmpl-unix) (defun my/ssh-remote-term (hostname)
                                          (interactive (list (completing-read "Hostname: " (pcmpl-ssh-hosts))))
                                          (my/remote-term hostname "ssh" hostname))))
@@ -790,7 +734,7 @@ This lets me open up terminals. I wish I could get this to work with tramp.
 *** Ibuffer
 #+begin_src emacs-lisp :tangle yes
   (use-package ibuffer
-    :straight t
+    :straight (:type built-in)
     :bind (("<f9>" . ibuffer))
     :init (setq ibuffer-shrink-to-minimum-size t
                 ibuffer-always-show-last-buffer nil
@@ -836,19 +780,12 @@ I don't know if this is actually necessary
     :bind (("C-x C-g" . magit-status)))
 #+end_src
 *** Projects
+Use the built-in =project.el=. Standard prefix is =C-x p= (e.g. =C-x p
+f= find file in project, =C-x p g= grep, =C-x p p= switch project).
+=consult-buffer= and =magit= integrate with this natively.
 #+begin_src emacs-lisp :tangle yes
-  (use-package projectile
-    :straight t
-    :diminish projectile-mode
-    :config
-    (progn
-      (setq projectile-keymap-prefix (kbd "C-c p"))
-      (setq projectile-completion-system 'default)
-      (setq projectile-enable-caching t)
-      (setq projectile-indexing-method 'alien)
-      (add-to-list 'projectile-globally-ignored-files "node-modules"))
-    :config
-    (projectile-global-mode))
+  (use-package project
+    :straight (:type built-in))
 #+end_src
 ** Navigation & Search
 *** Go to line
@@ -875,24 +812,18 @@ I don't know if this is actually necessary
     ("m" set-mark-command "mark" :bind nil)
     ("q" nil "quit"))
 #+end_src
-*** Lacarte
-Navigate menus via keyboard
-
+*** Menu bar via keyboard
+Navigate menus via keyboard using consult.
 #+begin_src emacs-lisp :tangle yes
-  (use-package lacarte
-    :straight t
-    :bind (("<f10>" . lacarte-execute-menu-command)))
+  (global-set-key (kbd "<f10>") #'consult-menu-bar)
 #+end_src
 
 *** Window movement
-Use arrow keys to switch windows (and frames, with X)
+Use arrow keys to switch windows.
 #+begin_src emacs-lisp :tangle yes
   (use-package windmove
-    :straight t
+    :straight (:type built-in)
     :init (windmove-default-keybindings))
-  (use-package framemove
-    :straight t
-    :init (setq framemove-hook-into-windmove t))
   (global-set-key "\M-o" 'other-window)
 #+end_src
 *** Move to start
@@ -1004,13 +935,6 @@ So powerful
     :straight t
     :defer t
     :bind (("M-2" . er/expand-region)))
-#+end_src
-*** Autocomplete
-#+begin_src emacs-lisp :tangle yes
-  (use-package company
-    :straight t
-    :diminish
-    :config (global-company-mode))
 #+end_src
 *** Transpose, but keep whitespace
 #+begin_src emacs-lisp :tangle yes
@@ -1152,7 +1076,7 @@ Use C-c C-m to compile
 
 #+begin_src emacs-lisp :tangle yes
   (use-package compile
-    :straight t
+    :straight (:type built-in)
     :init (progn
 	    (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
 	    (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
@@ -1217,10 +1141,9 @@ Add a hydra for navigating compilation logs
 **** TS-mode
 #+begin_src emacs-lisp :tangle yes
   (use-package python
-    :straight t
-      :hook ((python-ts-mode . eglot-ensure)
-             (python-ts-mode . company-mode))
-      :mode (("\\.py\\'" . python-ts-mode)))
+    :straight (:type built-in)
+    :hook (python-ts-mode . eglot-ensure)
+    :mode (("\\.py\\'" . python-ts-mode)))
 #+end_src
 **** Conda
 #+begin_src emacs-lisp :tangle yes
@@ -1288,7 +1211,7 @@ Add a hydra for navigating compilation logs
     :bind (:map rustic-mode-map
                 ("M-j" . imenu)
                 ("M-?" . xref-find-references)
-                ("C-c C-c l" . flycheck-list-errors)
+                ("C-c C-c l" . flymake-show-buffer-diagnostics)
                 ("C-c C-c a" . eglot-code-actions)
                 ("C-c C-c r" . eglot-rename)
                 ("C-c C-c q" . eglot-reconnect)
