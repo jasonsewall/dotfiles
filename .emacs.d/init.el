@@ -466,8 +466,12 @@ _SPC_ cancel    _o_nly this     _d_elete
                            "--pch-storage=memory"
                            "--header-insertion=never"
                            "--header-insertion-decorators=0")))
+  ;; basedpyright for type-aware completion, hover docs, and rename.
+  ;; Ruff is handled separately by apheleia (format) and could also
+  ;; be run as a flymake lint via flymake-ruff if you wanted, but
+  ;; basedpyright's diagnostics + mypy + ty already cover lots.
   (add-to-list 'eglot-server-programs
-               '(python-ts-mode . ("ruff" "server"))))
+               '(python-ts-mode . ("basedpyright-langserver" "--stdio"))))
 
 
 (use-package treesit-auto
@@ -825,56 +829,131 @@ _k_: previous error    _l_: last error
   :hook (python-ts-mode . eglot-ensure)
   :mode (("\\.py\\'" . python-ts-mode)))
 
-(use-package conda
-  :straight t
-  :after python
-  :config
-  ;; taken from doom
-  ;; The location of your anaconda home will be guessed from a list of common
-  ;; possibilities, starting with `conda-anaconda-home''s default value (which
-  ;; will consult a ANACONDA_HOME envvar, if it exists).
-  ;;
-  ;; If none of these work for you, `conda-anaconda-home' must be set
-  ;; explicitly. Afterwards, run M-x `conda-env-activate' to switch between
-  ;; environments
-  (or (cl-loop for dir in (list conda-anaconda-home
-                                "~/.anaconda"
-                                "~/.miniconda"
-                                "~/.miniconda3"
-                                "~/.miniforge3"
-                                "~/anaconda3"
-                                "~/miniconda3"
-                                "~/miniforge3"
-                                "~/opt/miniconda3"
-                                "/usr/bin/anaconda3"
-                                "/usr/local/anaconda3"
-                                "/usr/local/miniconda3"
-                                "/usr/local/Caskroom/miniconda/base"
-                                "~/.conda")
-               if (file-directory-p dir)
-               return (setq conda-anaconda-home (expand-file-name dir)
-                            conda-env-home-directory (expand-file-name dir)))
-      (message "Cannot find Anaconda installation"))
-  ;; integration with term/eshell
-  (conda-env-initialize-interactive-shells)
-  (add-to-list 'global-mode-string
-               '(conda-env-current-name (" conda:" conda-env-current-name " "))
-               'append))
-
+;; pyvenv supplies the activation primitives that pet drives.
 (use-package pyvenv
   :straight t
   :after python
   :config
-  (add-hook 'python-mode-local-vars-hook #'pyvenv-track-virtualenv)
   (add-to-list 'global-mode-string
                '(pyvenv-virtual-env-name (" venv:" pyvenv-virtual-env-name " "))
                'append))
+
+;; pet (Python Environment Tool) auto-detects the right venv per
+;; project — looks at .venv/, .python-version, pyproject.toml. Works
+;; with uv, poetry, pipenv, rye out of the box, no per-project setup.
+;; pet-mode wires its findings into pyvenv, eglot, flymake-mypy, etc.
+(use-package pet
+  :straight t
+  :config
+  (add-hook 'python-base-mode-hook #'pet-mode -10))
+
+(defvar jds/python-required-tools
+  '(("basedpyright-langserver" "basedpyright" "type-aware LSP (eglot)")
+    ("ruff"                    "ruff"         "formatter & linter (apheleia)")
+    ("mypy"                    "mypy"         "static type checker (flymake-mypy)")
+    ("ty"                      "ty"           "Astral type checker (flymake)"))
+  "List of (EXECUTABLE UV-PACKAGE DESCRIPTION) for Python tooling.")
+
+(defvar jds/python-tools--checked nil
+  "Non-nil once we've reported on missing Python tools this session.")
+
+(defun jds/python--find-tool (exe)
+  "Locate EXE, preferring the project venv via pet when available."
+  (or (and (fboundp 'pet-executable-find) (pet-executable-find exe))
+      (executable-find exe)))
+
+(defun jds/python-check-tools (&optional force)
+  "Report any of `jds/python-required-tools' that aren't on PATH.
+With prefix arg, re-check even if already reported this session."
+  (interactive "P")
+  (when (or force (not jds/python-tools--checked))
+    (setq jds/python-tools--checked t)
+    (let (missing)
+      (dolist (entry jds/python-required-tools)
+        (unless (jds/python--find-tool (car entry))
+          (push entry missing)))
+      (cond
+       (missing
+        (with-current-buffer (get-buffer-create "*python-tools*")
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert "Python tools not found on PATH (or in project venv):\n\n")
+            (dolist (m (nreverse missing))
+              (insert (format "  • %s\n      %s\n      install: uv tool install %s\n\n"
+                              (car m) (nth 2 m) (nth 1 m))))
+            (insert "After installing, run M-x jds/python-check-tools to re-verify.\n")
+            (insert "Or for project-local tools: uv add --dev <pkg> then uv sync.\n")
+            (special-mode))
+          (display-buffer (current-buffer))))
+       (force
+        (message "Python: all expected tools found"))))))
+
+(add-hook 'python-base-mode-hook #'jds/python-check-tools)
 
 (use-package apheleia
   :straight (apheleia
              :type git
              :host github
-             :repo "radian-software/apheleia"))
+             :repo "radian-software/apheleia")
+  :hook (python-ts-mode . apheleia-mode)
+  :config
+  ;; Use ruff format (apheleia knows ruff already; this makes sure
+  ;; python-ts-mode buffers route to it).
+  (setf (alist-get 'python-ts-mode apheleia-mode-alist) 'ruff))
+
+(use-package flymake-mypy
+  :straight (flymake-mypy :type git :host github :repo "com4/flymake-mypy")
+  :hook (python-base-mode . flymake-mypy-enable))
+
+(defvar-local jds/flymake-ty--proc nil)
+
+(defun jds/flymake-ty-backend (report-fn &rest _args)
+  "Flymake backend running =ty check= on the current buffer's file."
+  (let ((file (buffer-file-name))
+        (source (current-buffer)))
+    (when (and file (executable-find "ty"))
+      (when (process-live-p jds/flymake-ty--proc)
+        (kill-process jds/flymake-ty--proc))
+      (setq
+       jds/flymake-ty--proc
+       (make-process
+        :name "flymake-ty" :noquery t :connection-type 'pipe
+        :buffer (generate-new-buffer " *flymake-ty*")
+        :command (list "ty" "check" "--output-format" "concise" file)
+        :sentinel
+        (lambda (proc _event)
+          (when (memq (process-status proc) '(exit signal))
+            (unwind-protect
+                (when (buffer-live-p source)
+                  (with-current-buffer (process-buffer proc)
+                    (goto-char (point-min))
+                    (let (diags)
+                      ;; concise format: "file:line:col: severity[code]: message"
+                      (while (re-search-forward
+                              "^.+:\\([0-9]+\\):\\([0-9]+\\):? *\\(error\\|warning\\|info\\)[^:]*: *\\(.+\\)$"
+                              nil t)
+                        (let* ((line (string-to-number (match-string 1)))
+                               (col  (string-to-number (match-string 2)))
+                               (sev  (match-string 3))
+                               (msg  (match-string 4))
+                               (type (pcase sev
+                                       ("error"   :error)
+                                       ("warning" :warning)
+                                       (_         :note)))
+                               (region (with-current-buffer source
+                                         (flymake-diag-region source line col))))
+                          (when region
+                            (push (flymake-make-diagnostic
+                                   source (car region) (cdr region)
+                                   type (concat "[ty] " msg))
+                                  diags))))
+                      (funcall report-fn diags))))
+              (kill-buffer (process-buffer proc))))))))))
+
+(defun jds/enable-ty-flymake ()
+  (add-hook 'flymake-diagnostic-functions #'jds/flymake-ty-backend nil t))
+
+(add-hook 'python-base-mode-hook #'jds/enable-ty-flymake)
 
 (use-package rustic
   :straight t
