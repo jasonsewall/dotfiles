@@ -1,5 +1,15 @@
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 
+(defun jds/tangle-jds-config-on-save ()
+  "Tangle `jds-config.org' when it is saved."
+  (when (equal (buffer-file-name)
+               (expand-file-name "jds-config.org" user-emacs-directory))
+    (let ((org-confirm-babel-evaluate nil)
+          (prog-mode-hook nil))
+      (org-babel-tangle))))
+
+(add-hook 'after-save-hook #'jds/tangle-jds-config-on-save)
+
 (straight-use-package 'use-package)
 
 (server-start)
@@ -113,39 +123,39 @@ _SPC_ cancel    _o_nly this     _d_elete
   ("r" hydra-move-splitter-right)
   ("F" follow-mode)
   ("a" (lambda ()
-	 (interactive)
-	 (ace-window 1)
-	 (add-hook 'ace-window-end-once-hook
-		   'hydra-window/body))
+   (interactive)
+   (ace-window 1)
+   (add-hook 'ace-window-end-once-hook
+	     'hydra-window/body))
    )
   ("v" (lambda ()
-	 (interactive)
-	 (split-window-right)
-	 (windmove-right))
+   (interactive)
+   (split-window-right)
+   (windmove-right))
    )
   ("x" (lambda ()
-	 (interactive)
-	 (split-window-below)
-	 (windmove-down))
+   (interactive)
+   (split-window-below)
+   (windmove-down))
    )
   ("s" (lambda ()
-	 (interactive)
-	 (ace-window 4)
-	 (add-hook 'ace-window-end-once-hook
-		   'hydra-window/body)))
+   (interactive)
+   (ace-window 4)
+   (add-hook 'ace-window-end-once-hook
+	     'hydra-window/body)))
   ("S" save-buffer)
   ("d" delete-window)
   ("D" (lambda ()
-	 (interactive)
-	 (ace-window 16)
-	 (add-hook 'ace-window-end-once-hook
-		   'hydra-window/body))
+   (interactive)
+   (ace-window 16)
+   (add-hook 'ace-window-end-once-hook
+	     'hydra-window/body))
    )
   ("o" delete-other-windows)
   ("i" ace-maximize-window)
   ("z" (progn
-	 (winner-undo)
-	 (setq this-command 'winner-undo))
+   (winner-undo)
+   (setq this-command 'winner-undo))
    )
   ("Z" winner-redo)
   ("SPC" nil))
@@ -435,20 +445,22 @@ _SPC_ cancel    _o_nly this     _d_elete
 
 (use-package eglot
   :straight t
-  :config (add-to-list 'eglot-server-programs
-                       '(c-mode c++-mode cuda-mode
-                                . ("clangd"
-                                   "-j=4"
-                                   "--malloc-trim"
-                                   "--log=error"
-                                   "--background-index"
-                                   "--clang-tidy"
-                                   "--cross-file-rename"
-                                   "--completion-style=detailed"
-                                   "--pch-storage=memory"
-                                   "--header-insertion=never"
-                                   "--header-insertion-decorators=0"))
-                       '(python-ts-mode . ("ruff" "server"))))
+  :config
+  (add-to-list 'eglot-server-programs
+               '(c-mode c++-mode cuda-mode
+                        . ("clangd"
+                           "-j=4"
+                           "--malloc-trim"
+                           "--log=error"
+                           "--background-index"
+                           "--clang-tidy"
+                           "--cross-file-rename"
+                           "--completion-style=detailed"
+                           "--pch-storage=memory"
+                           "--header-insertion=never"
+                           "--header-insertion-decorators=0")))
+  (add-to-list 'eglot-server-programs
+               '(python-ts-mode . ("ruff" "server"))))
 
 (use-package tramp
   :straight (:type built-in)
@@ -562,18 +574,18 @@ _SPC_ cancel    _o_nly this     _d_elete
 (use-package avy
   :straight t
   :init (defhydra hydra-avy (global-map "M-g" :color blue)
-	  "avy-goto"
-	  ("c" avy-goto-char "char")
-	  ("C" avy-goto-char-2 "char-2")
-	  ("w" avy-goto-word-1 "word")
-	  ("s" avy-goto-subword-1 "subword")
-	  ("u" link-hint-open-link "open-URI")
-	  ("U" link-hint-copy-link "copy-URI"))
+    "avy-goto"
+    ("c" avy-goto-char "char")
+    ("C" avy-goto-char-2 "char-2")
+    ("w" avy-goto-word-1 "word")
+    ("s" avy-goto-subword-1 "subword")
+    ("u" link-hint-open-link "open-URI")
+    ("U" link-hint-copy-link "copy-URI"))
   :bind (("M-g g" . avy-goto-line)))
 
 (defhydra hydra-goto-line (goto-map ""
-				    :pre (display-line-numbers-mode 1)
-				    :post (display-line-numbers-mode -1))
+			      :pre (display-line-numbers-mode 1)
+			      :post (display-line-numbers-mode -1))
   "goto-line"
   ("g" goto-line "go")
   ("m" set-mark-command "mark" :bind nil)
@@ -644,7 +656,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package multiple-cursors
   :straight t
   :init (defhydra multiple-cursors-hydra (global-map "C-x m")
-	  "
+    "
      ^Up^            ^Down^        ^Other^
 ----------------------------------------------
 [_p_]   Next    [_n_]   Next    [_l_] Edit lines
@@ -655,24 +667,24 @@ point reaches the beginning or end of the buffer, stop there."
 ^ ^             ^ ^             [_s_] Sort regions
 ^ ^             ^ ^             [_q_] Quit
 "
-	  ("i" mc/insert-numbers)
-	  ("h" mc-hide-unmatched-lines-mode)
-	  ("s" mc/sort-regions)
-	  ("l" mc/edit-lines :exit t)
-	  ("a" mc/mark-all-like-this :exit t)
-	  ("n" mc/mark-next-like-this)
-	  ("N" mc/skip-to-next-like-this)
-	  ("M-n" mc/unmark-next-like-this)
-	  ("p" mc/mark-previous-like-this)
-	  ("P" mc/skip-to-previous-like-this)
-	  ("M-p" mc/unmark-previous-like-this)
-	  ("r" mc/mark-all-in-region-regexp :exit t)
-	  ("q" nil))
+    ("i" mc/insert-numbers)
+    ("h" mc-hide-unmatched-lines-mode)
+    ("s" mc/sort-regions)
+    ("l" mc/edit-lines :exit t)
+    ("a" mc/mark-all-like-this :exit t)
+    ("n" mc/mark-next-like-this)
+    ("N" mc/skip-to-next-like-this)
+    ("M-n" mc/unmark-next-like-this)
+    ("p" mc/mark-previous-like-this)
+    ("P" mc/skip-to-previous-like-this)
+    ("M-p" mc/unmark-previous-like-this)
+    ("r" mc/mark-all-in-region-regexp :exit t)
+    ("q" nil))
   :bind (("C-^" . set-rectangular-region-anchor)
-	 ("M-3" . mc/mark-next-like-this)
-	 ("M-4" . mc/mark-previous-like-this)
-	 ("M-#" . mc/unmark-next-like-this)
-	 ("M-$" . mc/unmark-previous-like-this)))
+   ("M-3" . mc/mark-next-like-this)
+   ("M-4" . mc/mark-previous-like-this)
+   ("M-#" . mc/unmark-next-like-this)
+   ("M-$" . mc/unmark-previous-like-this)))
 
 (use-package expand-region
   :straight t
@@ -769,11 +781,11 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package compile
   :straight t
   :init (progn
-	  (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-	  (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-	  (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-	  (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
-	  (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
+    (add-hook 'c-mode-common-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+    (add-hook 'fortran-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+    (add-hook 'f90-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+    (add-hook 'makefile-gmake-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile)))
+    (add-hook 'compilation-mode-hook (lambda () (local-set-key "\C-c\C-m" 'compile))))
   (setq compilation-scroll-output 'first-error))
 
 (defhydra hydra-next-error
@@ -798,12 +810,12 @@ _k_: previous error    _l_: last error
   :straight t
   :defer t
   :config (progn (setq TeX-PDF-mode t)
-		 (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
+	   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 
 (use-package slime
   :straight t
   :config (setq slime-contribs '(slime-fancy)
-		inferior-lisp-program "/usr/bin/sbcl"))
+	  inferior-lisp-program "/usr/bin/sbcl"))
 
 (defun my/eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -877,17 +889,17 @@ _k_: previous error    _l_: last error
 (use-package rustic
   :straight t
   :bind (:map rustic-mode-map
-              ("M-j" . lsp-ui-imenu)
-              ("M-?" . lsp-find-references)
+              ("M-j" . imenu)
+              ("M-?" . xref-find-references)
               ("C-c C-c l" . flycheck-list-errors)
-              ("C-c C-c a" . lsp-execute-code-action)
-              ("C-c C-c r" . lsp-rename)
-              ("C-c C-c q" . lsp-workspace-restart)
-              ("C-c C-c Q" . lsp-workspace-shutdown)
-              ("C-c C-c s" . lsp-rust-analyzer-status))
+              ("C-c C-c a" . eglot-code-actions)
+              ("C-c C-c r" . eglot-rename)
+              ("C-c C-c q" . eglot-reconnect)
+              ("C-c C-c Q" . eglot-shutdown))
   :custom
-  (setq rustic-lsp-server 'rust-analyzer)
-  (setq rustic-analyzer-command '("rustup run stable rust-analyzer"))
+  (rustic-lsp-client 'eglot)
+  (rustic-lsp-server 'rust-analyzer)
+  (rustic-analyzer-command '("rustup run stable rust-analyzer"))
   :config
   (setq rustic-format-on-save t))
 
@@ -899,7 +911,7 @@ _k_: previous error    _l_: last error
 (use-package markdown-mode
   :straight t
   :init (progn
-	  (add-hook 'markdown-mode-hook 'pandoc-mode)))
+    (add-hook 'markdown-mode-hook 'pandoc-mode)))
 
 (add-hook 'c-mode-hook #'eglot-ensure)
 (add-hook 'c++-mode-hook #'eglot-ensure)
@@ -926,8 +938,8 @@ _k_: previous error    _l_: last error
 (use-package plantuml-mode
   :straight t
   :init (progn
-	  (setq plantuml-executable-path "/usr/bin/plantuml")
-	  (setq plantuml-default-exec-mode 'executable)))
+    (setq plantuml-executable-path "/usr/bin/plantuml")
+    (setq plantuml-default-exec-mode 'executable)))
 
 (use-package lua-mode
   :straight t

@@ -1,4 +1,4 @@
-#+TITLE: Jason Sewall's Emacs config
+#+Title: Jason Sewall's Emacs config
 #+OPTIONS: toc:4 h:4
 
 
@@ -54,6 +54,20 @@ Get early-init going, if not using emacs 27+
 
 #+begin_src emacs-lisp :tangle yes
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
+#+end_src
+
+Auto-tangle this file on save so I never have to remember =C-c C-v t=.
+
+#+begin_src emacs-lisp :tangle yes
+  (defun jds/tangle-jds-config-on-save ()
+    "Tangle `jds-config.org' when it is saved."
+    (when (equal (buffer-file-name)
+                 (expand-file-name "jds-config.org" user-emacs-directory))
+      (let ((org-confirm-babel-evaluate nil)
+            (prog-mode-hook nil))
+        (org-babel-tangle))))
+
+  (add-hook 'after-save-hook #'jds/tangle-jds-config-on-save)
 #+end_src
 
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -673,20 +687,22 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package eglot
     :straight t
-    :config (add-to-list 'eglot-server-programs
-                         '(c-mode c++-mode cuda-mode
-                                  . ("clangd"
-                                     "-j=4"
-                                     "--malloc-trim"
-                                     "--log=error"
-                                     "--background-index"
-                                     "--clang-tidy"
-                                     "--cross-file-rename"
-                                     "--completion-style=detailed"
-                                     "--pch-storage=memory"
-                                     "--header-insertion=never"
-                                     "--header-insertion-decorators=0"))
-                         '(python-ts-mode . ("ruff" "server"))))
+    :config
+    (add-to-list 'eglot-server-programs
+                 '(c-mode c++-mode cuda-mode
+                          . ("clangd"
+                             "-j=4"
+                             "--malloc-trim"
+                             "--log=error"
+                             "--background-index"
+                             "--clang-tidy"
+                             "--cross-file-rename"
+                             "--completion-style=detailed"
+                             "--pch-storage=memory"
+                             "--header-insertion=never"
+                             "--header-insertion-decorators=0")))
+    (add-to-list 'eglot-server-programs
+                 '(python-ts-mode . ("ruff" "server"))))
 
 #+END_SRC
 
@@ -1268,17 +1284,17 @@ Add a hydra for navigating compilation logs
   (use-package rustic
     :straight t
     :bind (:map rustic-mode-map
-                ("M-j" . lsp-ui-imenu)
-                ("M-?" . lsp-find-references)
+                ("M-j" . imenu)
+                ("M-?" . xref-find-references)
                 ("C-c C-c l" . flycheck-list-errors)
-                ("C-c C-c a" . lsp-execute-code-action)
-                ("C-c C-c r" . lsp-rename)
-                ("C-c C-c q" . lsp-workspace-restart)
-                ("C-c C-c Q" . lsp-workspace-shutdown)
-                ("C-c C-c s" . lsp-rust-analyzer-status))
+                ("C-c C-c a" . eglot-code-actions)
+                ("C-c C-c r" . eglot-rename)
+                ("C-c C-c q" . eglot-reconnect)
+                ("C-c C-c Q" . eglot-shutdown))
     :custom
-    (setq rustic-lsp-server 'rust-analyzer)
-    (setq rustic-analyzer-command '("rustup run stable rust-analyzer"))
+    (rustic-lsp-client 'eglot)
+    (rustic-lsp-server 'rust-analyzer)
+    (rustic-analyzer-command '("rustup run stable rust-analyzer"))
     :config
     (setq rustic-format-on-save t))
 #+end_src
