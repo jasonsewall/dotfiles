@@ -60,6 +60,9 @@
   (global-font-lock-mode 1)
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
+  (repeat-mode 1)
+  (when (fboundp 'pixel-scroll-precision-mode)
+    (pixel-scroll-precision-mode 1))
   (fset 'yes-or-no-p 'y-or-n-p))
 
 (use-package hydra
@@ -337,8 +340,24 @@ _SPC_ cancel    _o_nly this     _d_elete
                 (consult-line query)))))
 
 (use-package corfu
+  :straight (corfu :files (:defaults "extensions/*"))
+  :init (global-corfu-mode 1)
+  :custom
+  (corfu-auto t)
+  (corfu-auto-delay 0.2)
+  (corfu-cycle t)
+  :config
+  (require 'corfu-popupinfo)
+  (corfu-popupinfo-mode 1))
+
+;; Completion-at-point extensions. Plays the role company-backends did
+;; for company-mode: dabbrev, file paths, keywords, abbrevs, etc.
+(use-package cape
   :straight t
-  :init (global-corfu-mode 1))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
 
 
 ;;; https://with-emacs.com/posts/tutorials/customize-completion-at-point/
@@ -380,15 +399,11 @@ _SPC_ cancel    _o_nly this     _d_elete
                          #'completion--in-region)
                        args)))
 
-(use-package zenburn-theme
+(use-package ef-themes
   :straight t
-  :init
-  (progn
-    (cond
-     (window-system (load-theme 'zenburn t))
-     (t             (load-theme 'zenburn t)))))
-
-(setq transient-mark-mode t)
+  :config
+  (setq ef-themes-to-toggle '(ef-dream ef-frost))
+  (load-theme 'ef-dream :no-confirm))
 
 (prefer-coding-system 'utf-8)
 (setq-default buffer-file-coding-system 'utf-8-unix)
@@ -426,7 +441,7 @@ _SPC_ cancel    _o_nly this     _d_elete
   :init (diminish 'eldoc-mode))
 
 (use-package eglot
-  :straight t
+  :straight (:type built-in)
   :config
   (add-to-list 'eglot-server-programs
                '(c-mode c++-mode cuda-mode
@@ -443,6 +458,14 @@ _SPC_ cancel    _o_nly this     _d_elete
                            "--header-insertion-decorators=0")))
   (add-to-list 'eglot-server-programs
                '(python-ts-mode . ("ruff" "server"))))
+
+(use-package treesit-auto
+  :straight t
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 (use-package tramp
   :straight (:type built-in)
@@ -699,16 +722,17 @@ point reaches the beginning or end of the buffer, stop there."
   :straight t
   :hook (prog-mode . ws-butler-mode))
 
-(use-package undo-tree
+(use-package vundo
   :straight t
-  :diminish undo-tree-mode
-  :config
-  (progn
-    (global-undo-tree-mode)
-    (setq undo-tree-visualizer-timestamps t)
-    (setq undo-tree-visualizer-diff t)))
+  :bind (("C-x u" . vundo))
+  :custom
+  (vundo-glyph-alist vundo-unicode-symbols))
 
 (setq org-src-window-setup 'current-window)
+
+(use-package org-modern
+  :straight t
+  :hook (org-mode . org-modern-mode))
 
 (defun my/copy-code-as-org-block-and-gist (beg end)
   (interactive "r")
@@ -757,10 +781,10 @@ _k_: previous error    _l_: last error
   :config (progn (setq TeX-PDF-mode t)
 	   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 
-(use-package slime
+(use-package sly
   :straight t
-  :config (setq slime-contribs '(slime-fancy)
-	  inferior-lisp-program "/usr/bin/sbcl"))
+  :custom
+  (inferior-lisp-program "sbcl"))
 
 (defun my/eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -860,17 +884,11 @@ _k_: previous error    _l_: last error
 (add-hook 'c-mode-hook #'eglot-ensure)
 (add-hook 'c++-mode-hook #'eglot-ensure)
 
-(add-hook 'c++-mode-hook '(lambda ()
-                            (define-key c++-mode-map "\C-cf" 'align-current)))
-
-(add-hook 'c-mode-hook '(lambda ()
-                          (define-key c-mode-map "\C-cf" 'align-current)))
-
-(add-hook 'c++-mode-hook '(lambda ()
-                            (key-chord-define c++-mode-map ";;" "\C-e;")))
-
-(add-hook 'c-mode-hook '(lambda ()
-                          (key-chord-define c++-mode-map ";;" "\C-e;")))
+(with-eval-after-load 'cc-mode
+  (define-key c-mode-map   (kbd "C-c f") #'align-current)
+  (define-key c++-mode-map (kbd "C-c f") #'align-current)
+  (key-chord-define c-mode-map   ";;" "\C-e;")
+  (key-chord-define c++-mode-map ";;" "\C-e;"))
 
 (use-package cuda-mode
   :straight t

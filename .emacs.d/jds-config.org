@@ -149,6 +149,9 @@ stay in their own sections below.
     (global-font-lock-mode 1)
     (tool-bar-mode -1)
     (scroll-bar-mode -1)
+    (repeat-mode 1)
+    (when (fboundp 'pixel-scroll-precision-mode)
+      (pixel-scroll-precision-mode 1))
     (fset 'yes-or-no-p 'y-or-n-p))
 #+END_SRC
 
@@ -482,8 +485,24 @@ I got this from here: https://codeberg.org/vifon/emacs-config/src/branch/master/
                 (consult-line query)))))
 
 (use-package corfu
+  :straight (corfu :files (:defaults "extensions/*"))
+  :init (global-corfu-mode 1)
+  :custom
+  (corfu-auto t)
+  (corfu-auto-delay 0.2)
+  (corfu-cycle t)
+  :config
+  (require 'corfu-popupinfo)
+  (corfu-popupinfo-mode 1))
+
+;; Completion-at-point extensions. Plays the role company-backends did
+;; for company-mode: dabbrev, file paths, keywords, abbrevs, etc.
+(use-package cape
   :straight t
-  :init (global-corfu-mode 1))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
 
 
 ;;; https://with-emacs.com/posts/tutorials/customize-completion-at-point/
@@ -528,21 +547,16 @@ I got this from here: https://codeberg.org/vifon/emacs-config/src/branch/master/
 
 *** Appearances
 
-Theme
+Prot's ef-themes — pleasant, well-balanced, many variants. Try
+=M-x ef-themes-select= to browse, or =M-x ef-themes-toggle= to
+switch between a preferred light/dark pair.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package zenburn-theme
+  (use-package ef-themes
     :straight t
-    :init
-    (progn
-      (cond
-       (window-system (load-theme 'zenburn t))
-       (t             (load-theme 'zenburn t)))))
-#+END_SRC
-
-Enable visual feedback on selections
-#+BEGIN_SRC emacs-lisp
-  (setq transient-mark-mode t)
+    :config
+    (setq ef-themes-to-toggle '(ef-dream ef-frost))
+    (load-theme 'ef-dream :no-confirm))
 #+END_SRC
 
 *** Unicode
@@ -601,7 +615,7 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
 
 #+BEGIN_SRC emacs-lisp
   (use-package eglot
-    :straight t
+    :straight (:type built-in)
     :config
     (add-to-list 'eglot-server-programs
                  '(c-mode c++-mode cuda-mode
@@ -619,6 +633,22 @@ From https://github.com/purcell/emacs.d/blob/master/lisp/init-auto-complete.el -
     (add-to-list 'eglot-server-programs
                  '(python-ts-mode . ("ruff" "server"))))
 
+#+END_SRC
+
+*** Tree-sitter
+
+=treesit= is built into Emacs 29+. =treesit-auto= auto-installs
+grammars and remaps modes to their =-ts-mode= variants (so
+=python-mode= → =python-ts-mode=, =rust-mode= → =rust-ts-mode=, etc.).
+
+#+BEGIN_SRC emacs-lisp
+  (use-package treesit-auto
+    :straight t
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
 #+END_SRC
 
 ** System stuff
@@ -967,21 +997,18 @@ surgical behavior.
     :hook (prog-mode . ws-butler-mode))
 #+END_SRC
 
-*** Undo tree mode - visualize your undos and branches
+*** Vundo — visualize the undo tree
 
-People often struggle with the Emacs undo model, where there's really no concept of "redo" - you simply undo the undo.
-
-This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the changes you've made, undo back to a certain point (or redo), and go down different branches.
+=vundo= visualizes Emacs's built-in undo system without replacing it
+(unlike =undo-tree=). Use =C-x u= to pop the visualizer; navigate with
+=p=/=n=/=f=/=b= and exit with =q=.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package undo-tree
+  (use-package vundo
     :straight t
-    :diminish undo-tree-mode
-    :config
-    (progn
-      (global-undo-tree-mode)
-      (setq undo-tree-visualizer-timestamps t)
-      (setq undo-tree-visualizer-diff t)))
+    :bind (("C-x u" . vundo))
+    :custom
+    (vundo-glyph-alist vundo-unicode-symbols))
 #+END_SRC
 
 ** Editing modes
@@ -992,6 +1019,17 @@ I don't want to get distracted by the same code in the other window, so I want o
 
 #+begin_src emacs-lisp
   (setq org-src-window-setup 'current-window)
+#+end_src
+
+**** org-modern
+
+Modernized rendering for org buffers: nicer headlines, blocks, lists,
+checkboxes. Pure aesthetics, no behavior changes.
+
+#+begin_src emacs-lisp
+  (use-package org-modern
+    :straight t
+    :hook (org-mode . org-modern-mode))
 #+end_src
 
 **** Copying and sharing code
@@ -1058,11 +1096,12 @@ Add a hydra for navigating compilation logs
 		   (add-hook 'LaTeX-mode-hook '(lambda () (flyspell-mode 1)))))
 #+end_src
 *** Common Lisp
+=sly= is a maintained fork of =slime= with a nicer UX.
 #+begin_src emacs-lisp
-  (use-package slime
+  (use-package sly
     :straight t
-    :config (setq slime-contribs '(slime-fancy)
-		  inferior-lisp-program "/usr/bin/sbcl"))
+    :custom
+    (inferior-lisp-program "sbcl"))
 #+end_src
 *** Elisp
 #+begin_src emacs-lisp
@@ -1182,21 +1221,20 @@ Add a hydra for navigating compilation logs
 
 New modern C setup!
 
+Eglot for LSP-driven completion and diagnostics. =C-c f= aligns the
+region. =;;= chord jumps to end-of-line and inserts a semicolon.
+=define-key= and =key-chord-define= mutate the mode-map, so they only
+need to run once — use =with-eval-after-load= instead of a hook.
+
 #+begin_src emacs-lisp
   (add-hook 'c-mode-hook #'eglot-ensure)
   (add-hook 'c++-mode-hook #'eglot-ensure)
 
-  (add-hook 'c++-mode-hook '(lambda ()
-                              (define-key c++-mode-map "\C-cf" 'align-current)))
-
-  (add-hook 'c-mode-hook '(lambda ()
-                            (define-key c-mode-map "\C-cf" 'align-current)))
-
-  (add-hook 'c++-mode-hook '(lambda ()
-                              (key-chord-define c++-mode-map ";;" "\C-e;")))
-
-  (add-hook 'c-mode-hook '(lambda ()
-                            (key-chord-define c++-mode-map ";;" "\C-e;")))
+  (with-eval-after-load 'cc-mode
+    (define-key c-mode-map   (kbd "C-c f") #'align-current)
+    (define-key c++-mode-map (kbd "C-c f") #'align-current)
+    (key-chord-define c-mode-map   ";;" "\C-e;")
+    (key-chord-define c++-mode-map ";;" "\C-e;"))
 #+end_src
 
 *** CUDA
