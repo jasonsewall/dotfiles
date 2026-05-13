@@ -61,6 +61,7 @@
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
   (repeat-mode 1)
+  (tab-bar-mode 1)
   (when (fboundp 'pixel-scroll-precision-mode)
     (pixel-scroll-precision-mode 1))
   (fset 'yes-or-no-p 'y-or-n-p))
@@ -405,6 +406,15 @@ _SPC_ cancel    _o_nly this     _d_elete
   (setq ef-themes-to-toggle '(ef-dream ef-frost))
   (load-theme 'ef-dream :no-confirm))
 
+(use-package minions
+  :straight t
+  :config (minions-mode 1))
+
+(use-package breadcrumb
+  :straight t
+  :hook ((prog-mode . breadcrumb-local-mode)
+         (text-mode . breadcrumb-local-mode)))
+
 (prefer-coding-system 'utf-8)
 (setq-default buffer-file-coding-system 'utf-8-unix)
 (set-default-coding-systems 'utf-8-unix)
@@ -459,6 +469,7 @@ _SPC_ cancel    _o_nly this     _d_elete
   (add-to-list 'eglot-server-programs
                '(python-ts-mode . ("ruff" "server"))))
 
+
 (use-package treesit-auto
   :straight t
   :custom
@@ -466,6 +477,13 @@ _SPC_ cancel    _o_nly this     _d_elete
   :config
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
+
+(use-package eldoc-box
+  :straight t
+  :hook (eglot-managed-mode . eldoc-box-hover-mode)
+  :custom
+  (eldoc-box-max-pixel-width 600)
+  (eldoc-box-max-pixel-height 400))
 
 (use-package tramp
   :straight (:type built-in)
@@ -733,6 +751,10 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package org-modern
   :straight t
   :hook (org-mode . org-modern-mode))
+
+(use-package org-appear
+  :straight t
+  :hook (org-mode . org-appear-mode))
 
 (defun my/copy-code-as-org-block-and-gist (beg end)
   (interactive "r")

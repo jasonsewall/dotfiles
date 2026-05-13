@@ -3,6 +3,165 @@
 #+PROPERTY: header-args:emacs-lisp :tangle init.el
 
 
+* Cheatsheet — trying out the modern stack
+
+A running guide. Keep updated as packages change. Nothing in this
+section tangles (no source blocks); it's documentation.
+
+** Completion: minibuffer (vertico stack)
+
+Vertico is the vertical minibuffer UI; marginalia adds annotations;
+orderless lets you type out-of-order substrings (space separator);
+consult adds richer commands; embark acts on whatever you've selected.
+
+- =M-x= , =C-x b= , =C-x C-f= — already vertico-powered; just type
+  partial words in any order
+- =C-x b= (=consult-buffer=) — switch buffer with live preview
+- =C-x C-r= (=consult-recent-file=) — recent files
+- =M-s f= or =M-g g= (=consult-line=) — fuzzy-search current buffer
+- =M-g r= (=consult-ripgrep=) — ripgrep across the project
+- =M-g i= (=consult-imenu=) — jump to function/heading by name
+- =M-g o= (=consult-outline=) — outline navigation
+- =M-y= (=consult-yank-pop=) — visual kill-ring
+- =C-c o= or =C-.= (=embark-act=) — act on target at point
+  (file → dired/copy/attach; buffer → kill/rename; URL → browse…)
+- =M-o= inside the minibuffer — =embark-act= on the current candidate
+- =C-x M-r= (=vertico-repeat=) — re-run last completion session
+- type =!foo= in minibuffer — exclude matches containing "foo"
+  (orderless dispatcher); =foo== — match "foo" literally
+
+** Completion: in-buffer (corfu + cape)
+
+Corfu now =:custom corfu-auto t= so the popup triggers as you type.
+Pause to see =corfu-popupinfo= docs. =cape= adds dabbrev/file/keyword
+sources to =completion-at-point-functions=.
+
+- (just type) — corfu popup; arrows / =C-n=/=C-p= to navigate; =RET=
+  accepts; =TAB= cycles
+- =C-M-i= (=completion-at-point=) — force completion (file paths,
+  dabbrev expansions, etc., from cape)
+- =M-/= (=hippie-expand=) — old-school stepwise expansion fallback
+
+** LSP / diagnostics (eglot + flymake + eldoc-box)
+
+- visit a code buffer in a configured mode (C/C++/CUDA/Rust/Python) —
+  eglot starts automatically via the per-mode hooks
+- =M-.= / =M-?= — jump to definition / find references
+- =M-x eglot-rename= — rename across the project
+- =M-x eglot-code-actions= — quick fixes / refactors
+- =M-n= / =M-p= — next/previous flymake diagnostic
+- =C-c ! l= — flymake buffer diagnostics list
+- =C-h .= — eldoc-box: float a child frame with signature/docs
+  (instead of cramped echo area); auto-on in eglot buffers
+- rustic buffers also have =C-c C-c a/r/q/Q= for code-actions/rename/
+  reconnect/shutdown, and =C-c C-c l= for diagnostics
+
+** Tree-sitter (treesit-auto)
+
+- visit any =.c=/=.rs=/=.go=/etc. file — you'll be prompted once to
+  install the grammar, then the buffer uses the =-ts-mode= variant
+- =M-x treesit-auto-install-all= — pre-install everything
+
+** Projects (built-in project.el — replaces projectile)
+
+The new prefix is =C-x p=. Bindings to remember:
+
+- =C-x p f= — find file in project
+- =C-x p g= — grep
+- =C-x p r= — query-replace across project
+- =C-x p p= — switch project
+- =C-x p b= — buffer in project
+- =C-x p s= / =C-x p e= — shell / eshell in project
+- =C-x p D= — dired the project root
+- =C-x p k= — kill all project buffers
+
+** VCS
+
+- =C-x C-g= — =magit-status=
+- =C-c m l= — =git-link= (copy URL to current line on the remote)
+- =yadm= as a TRAMP method: =C-x C-f /yadm:enter:~/.gitconfig=
+
+** Editing
+
+- =C-x u= (=vundo=) — visualize undo tree; =p/n/f/b= to navigate,
+  =q= to exit, =RET= to commit
+- =M-2= (=er/expand-region=) — expand selection by syntactic unit
+- =C-x m= — multiple-cursors hydra (=l= edit lines, =a= mark all,
+  =n/p= mark next/prev, =r= mark all in regex)
+  - while multi-cursors are live, =C-s= becomes phi-search (works
+    across all cursors)
+- =M-3= / =M-4= — quick mark next/prev like this
+- =M-SPC= — =cycle-spacing= (toggle 0/1/many spaces)
+- =C-c t= — transpose at whitespace
+- =C-a= — smart beginning-of-line (toggles indentation vs. column 0)
+- =C-x M-q= — unfill paragraph (one line)
+
+** Snippets
+
+- =yas-insert-snippet= or just type a trigger + =TAB=
+- snippets live in =~/.emacs.d/snippets/=
+
+** Window / frame nav
+
+- =C-x w= — =hydra-window= (then =b= switch-buffer, =f= find-file,
+  =h/j/k/l= move, =v/x= split, =a= ace-jump, =s= swap, =o= delete
+  others, =d= delete, =z= winner-undo, =Z= winner-redo)
+- =M-g= — =hydra-avy= (=c= char, =C= 2-char, =w= word, =s= subword,
+  =u= follow URI)
+- =repeat-mode= is on: after =C-x o= (other-window), keep pressing
+  =o= to keep cycling. Works for many prefixed commands.
+
+** Workspaces (tab-bar-mode)
+
+Built-in workspaces; tabs are *window configurations*, not buffers.
+
+- =C-x t 2= — new tab
+- =C-x t 0= — close current tab
+- =C-x t o= — next tab; =C-x t O= — previous
+- =C-x t r= — rename tab
+- =C-x t b= — switch to buffer in another tab
+- =C-x t RET= / =C-x t <N>= — jump to tab by name / number
+
+** Search
+
+- =C-s= / =C-r= — isearch (plain); =TAB= during isearch hands off to
+  =consult-line=
+- rg.el bindings via =rg-enable-default-bindings= prefix =C-c s=
+
+** Themes
+
+- =M-x ef-themes-select= — browse all variants with live preview
+- =M-x ef-themes-toggle= — flip between =ef-dream= ↔ =ef-frost=
+- adjust the toggle pair: =(setq ef-themes-to-toggle '(THEME-A THEME-B))=
+
+** Org-mode
+
+- =C-c '= (=org-edit-special=) — edit a src block in its own buffer
+- =C-c C-v t= (=org-babel-tangle=) — tangle (also auto-tangle on
+  save of this file via =jds/tangle-jds-config-on-save=)
+- =org-modern-mode= is on in org buffers — cosmetic
+- =org-appear-mode= is on — when point lands on =*bold*=/=/italic/=/
+  links, the raw markup briefly reveals so you can edit it
+
+** Lisp REPLs
+
+- =M-x sly= — start a Common Lisp REPL (sbcl); =M-.= jumps, =C-c
+  C-k= compile buffer, =C-c C-c= compile defun
+- =M-x ielm= — Emacs Lisp REPL (built-in)
+
+** Misc
+
+- =<f9>= — ibuffer
+- =<f10>= — =consult-menu-bar= (search menu commands)
+- =C-c g= — goto-line
+- =C-x C-c C-v= — actually quit Emacs (=C-x C-c= is unbound to
+  prevent butterfinger exits)
+- =hydra-desktop/body= — desktop save/restore/clear
+- =minions-mode= clicks the modeline-icon to expand minor-mode list
+- =breadcrumb-local-mode= shows imenu/project crumbs in the header
+  line (auto-on in prog-/text-mode)
+
+
 * Configuration
 ** About this file
 :PROPERTIES:
@@ -150,6 +309,7 @@ stay in their own sections below.
     (tool-bar-mode -1)
     (scroll-bar-mode -1)
     (repeat-mode 1)
+    (tab-bar-mode 1)
     (when (fboundp 'pixel-scroll-precision-mode)
       (pixel-scroll-precision-mode 1))
     (fset 'yes-or-no-p 'y-or-n-p))
@@ -559,6 +719,25 @@ switch between a preferred light/dark pair.
     (load-theme 'ef-dream :no-confirm))
 #+END_SRC
 
+=minions= collapses the long list of minor-mode lighters in the
+modeline into a single icon you can click to expand.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package minions
+    :straight t
+    :config (minions-mode 1))
+#+END_SRC
+
+=breadcrumb= shows your location (imenu / project) in the header
+line. Helpful when navigating big files.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package breadcrumb
+    :straight t
+    :hook ((prog-mode . breadcrumb-local-mode)
+           (text-mode . breadcrumb-local-mode)))
+#+END_SRC
+
 *** Unicode
 
 #+BEGIN_SRC emacs-lisp
@@ -649,6 +828,20 @@ grammars and remaps modes to their =-ts-mode= variants (so
     :config
     (treesit-auto-add-to-auto-mode-alist 'all)
     (global-treesit-auto-mode))
+#+END_SRC
+
+*** eldoc-box — floating signature/doc popups
+
+The default eldoc echo area is cramped for LSP-style signatures.
+=eldoc-box= pops a child frame instead. Toggle with =C-h .= or hover.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package eldoc-box
+    :straight t
+    :hook (eglot-managed-mode . eldoc-box-hover-mode)
+    :custom
+    (eldoc-box-max-pixel-width 600)
+    (eldoc-box-max-pixel-height 400))
 #+END_SRC
 
 ** System stuff
@@ -1021,15 +1214,21 @@ I don't want to get distracted by the same code in the other window, so I want o
   (setq org-src-window-setup 'current-window)
 #+end_src
 
-**** org-modern
+**** org-modern + org-appear
 
-Modernized rendering for org buffers: nicer headlines, blocks, lists,
-checkboxes. Pure aesthetics, no behavior changes.
+=org-modern= modernizes headlines, blocks, lists, checkboxes.
+=org-appear= reveals the underlying markup (=*bold*=, =/italic/=,
+links) when point lands on it, so you can edit in place without
+toggling =org-toggle-link-display=.
 
 #+begin_src emacs-lisp
   (use-package org-modern
     :straight t
     :hook (org-mode . org-modern-mode))
+
+  (use-package org-appear
+    :straight t
+    :hook (org-mode . org-appear-mode))
 #+end_src
 
 **** Copying and sharing code
