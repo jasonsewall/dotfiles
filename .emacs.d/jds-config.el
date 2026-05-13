@@ -151,6 +151,8 @@ _SPC_ cancel    _o_nly this     _d_elete
    (add-hook 'ace-window-end-once-hook
 	     'hydra-window/body))
    )
+  ("b" switch-to-buffer :exit t)
+  ("f" find-file :exit t)
   ("o" delete-other-windows)
   ("i" ace-maximize-window)
   ("z" (progn
