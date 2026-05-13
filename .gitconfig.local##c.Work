@@ -1,6 +1,8 @@
 [user]
 	name = Jason Sewall
 	email = jasewall@nvidia.com
+[core]
+	excludesfile = ~/.gitignore
 [url "ssh://git@gitlab-master.nvidia.com:12051/"]
 	insteadOf = ssh://git@gitlab-master.nvidia.com/
 	insteadOf = https://gitlab-master.nvidia.com

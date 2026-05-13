@@ -13,7 +13,3 @@
 	enabled = true
 [init]
 	defaultBranch = main
-[url "ssh://git@gitlab-master.nvidia.com:12051/"]
-	insteadOf = https://gitlab-master.nvidia.com/
-[core]
-	excludesfile = /home/jasewall/.gitignore
