@@ -50,7 +50,14 @@ sources to =completion-at-point-functions=.
 - =M-x eglot-rename= — rename across the project
 - =M-x eglot-code-actions= — quick fixes / refactors
 - =M-n= / =M-p= — next/previous flymake diagnostic
+- =C-c != — echo flymake diagnostic(s) for the *current line*
+  (just put point anywhere on the line — no need to be inside the
+  underlined span)
 - =C-c ! l= — flymake buffer diagnostics list
+- when point is on a line with diagnostics, the message also shows
+  in =eldoc-box= automatically (we replaced flymake's point-only
+  eldoc reporter with a line-aware one — see
+  =jds/flymake-eldoc-on-line=)
 - =C-h .= — eldoc-box: float a child frame with signature/docs
   (instead of cramped echo area); auto-on in eglot buffers
 - rustic buffers also have =C-c C-c a/r/q/Q= for code-actions/rename/
@@ -359,14 +366,62 @@ Keybinding craziness
 Built-in syntax checker. Eglot turns this on automatically in LSP
 buffers; we also enable it in prog-mode for non-LSP buffers (elisp,
 etc.).
+
+By default flymake only shows the diagnostic message when point is
+inside the underlined region. That's annoying when there's a margin
+=!= and you've already moved to the line — you shouldn't have to
+hunt for the exact column. We override the eldoc integration with a
+line-aware variant and add =C-c != to echo any diagnostics on the
+current line on demand.
+
 #+BEGIN_SRC emacs-lisp
+  (defun jds/flymake-eldoc-on-line (report-doc &rest _)
+    "Like `flymake-eldoc-function' but for the whole current line.
+  Returns a string suitable for eldoc when there is at least one
+  flymake diagnostic anywhere between =line-beginning-position= and
+  =line-end-position=."
+    (let ((diags (flymake-diagnostics
+                  (line-beginning-position) (line-end-position))))
+      (when diags
+        (funcall report-doc
+                 (mapconcat
+                  (lambda (d)
+                    (format "[%s] %s"
+                            (flymake-diagnostic-type d)
+                            (flymake-diagnostic-text d)))
+                  diags "\n")))))
+
+  (defun jds/flymake-line-message ()
+    "Echo flymake diagnostics for the current line, if any."
+    (interactive)
+    (let ((diags (flymake-diagnostics
+                  (line-beginning-position) (line-end-position))))
+      (if diags
+          (message "%s"
+                   (mapconcat
+                    (lambda (d)
+                      (format "[%s] %s"
+                              (flymake-diagnostic-type d)
+                              (flymake-diagnostic-text d)))
+                    diags "\n"))
+        (message "No flymake diagnostics on this line"))))
+
+  (defun jds/setup-flymake-eldoc ()
+    "Swap flymake's point-only eldoc reporter for a line-aware one."
+    (remove-hook 'eldoc-documentation-functions
+                 #'flymake-eldoc-function t)
+    (add-hook 'eldoc-documentation-functions
+              #'jds/flymake-eldoc-on-line nil t))
+
   (use-package flymake
     :straight (:type built-in)
-    :hook (prog-mode . flymake-mode)
+    :hook ((prog-mode . flymake-mode)
+           (flymake-mode . jds/setup-flymake-eldoc))
     :bind (:map flymake-mode-map
            ("M-n" . flymake-goto-next-error)
            ("M-p" . flymake-goto-prev-error)
-           ("C-c ! l" . flymake-show-buffer-diagnostics)))
+           ("C-c ! l" . flymake-show-buffer-diagnostics)
+           ("C-c !"   . jds/flymake-line-message)))
 #+END_SRC
 
 *** Key-chord

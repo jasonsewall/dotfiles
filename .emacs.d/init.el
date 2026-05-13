@@ -69,13 +69,53 @@
 (use-package hydra
 :straight t)
 
+(defun jds/flymake-eldoc-on-line (report-doc &rest _)
+  "Like `flymake-eldoc-function' but for the whole current line.
+Returns a string suitable for eldoc when there is at least one
+flymake diagnostic anywhere between =line-beginning-position= and
+=line-end-position=."
+  (let ((diags (flymake-diagnostics
+                (line-beginning-position) (line-end-position))))
+    (when diags
+      (funcall report-doc
+               (mapconcat
+                (lambda (d)
+                  (format "[%s] %s"
+                          (flymake-diagnostic-type d)
+                          (flymake-diagnostic-text d)))
+                diags "\n")))))
+
+(defun jds/flymake-line-message ()
+  "Echo flymake diagnostics for the current line, if any."
+  (interactive)
+  (let ((diags (flymake-diagnostics
+                (line-beginning-position) (line-end-position))))
+    (if diags
+        (message "%s"
+                 (mapconcat
+                  (lambda (d)
+                    (format "[%s] %s"
+                            (flymake-diagnostic-type d)
+                            (flymake-diagnostic-text d)))
+                  diags "\n"))
+      (message "No flymake diagnostics on this line"))))
+
+(defun jds/setup-flymake-eldoc ()
+  "Swap flymake's point-only eldoc reporter for a line-aware one."
+  (remove-hook 'eldoc-documentation-functions
+               #'flymake-eldoc-function t)
+  (add-hook 'eldoc-documentation-functions
+            #'jds/flymake-eldoc-on-line nil t))
+
 (use-package flymake
   :straight (:type built-in)
-  :hook (prog-mode . flymake-mode)
+  :hook ((prog-mode . flymake-mode)
+         (flymake-mode . jds/setup-flymake-eldoc))
   :bind (:map flymake-mode-map
          ("M-n" . flymake-goto-next-error)
          ("M-p" . flymake-goto-prev-error)
-         ("C-c ! l" . flymake-show-buffer-diagnostics)))
+         ("C-c ! l" . flymake-show-buffer-diagnostics)
+         ("C-c !"   . jds/flymake-line-message)))
 
 (use-package key-chord
   :straight t
