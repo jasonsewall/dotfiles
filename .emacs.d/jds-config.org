@@ -935,10 +935,10 @@ Use arrow keys to switch windows (and frames, with X)
   (use-package phi-search
     :straight t
     :diminish phi-search
-    :config
-    (progn
-      (global-set-key (kbd "C-s") 'phi-search)
-      (global-set-key (kbd "C-r") 'phi-search-backward)))
+    :after multiple-cursors
+    :bind (:map mc/keymap
+           ("C-s" . phi-search)
+           ("C-r" . phi-search-backward)))
 #+end_src
 ** Editing tricks
 *** Yasnippet

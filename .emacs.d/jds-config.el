@@ -639,10 +639,10 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package phi-search
   :straight t
   :diminish phi-search
-  :config
-  (progn
-    (global-set-key (kbd "C-s") 'phi-search)
-    (global-set-key (kbd "C-r") 'phi-search-backward)))
+  :after multiple-cursors
+  :bind (:map mc/keymap
+         ("C-s" . phi-search)
+         ("C-r" . phi-search-backward)))
 
 (use-package yasnippet
   :straight t
