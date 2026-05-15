@@ -100,6 +100,45 @@ In a project:
   install the grammar, then the buffer uses the =-ts-mode= variant
 - =M-x treesit-auto-install-all= — pre-install everything
 
+** Markdown / TOML / YAML
+
+Tree-sitter modes for the structure, eglot for the smarts.
+Install the language servers on your =$PATH= (pick whichever
+package manager you use):
+
+#+begin_example
+# macOS (Homebrew)
+brew install pandoc marksman taplo yaml-language-server
+
+# Linux — Debian/Ubuntu
+sudo apt install pandoc
+# marksman, taplo, yaml-language-server usually not in apt; use:
+
+# Cross-platform fallbacks
+cargo install taplo-cli --features lsp
+npm install -g yaml-language-server
+# marksman: grab a release from
+#   https://github.com/artempyanykh/marksman/releases
+# and drop it on $PATH (chmod +x it).
+#+end_example
+
+- =markdown-mode= (=.md=): pandoc-mode for export, visual-line-mode
+  for wrap, native code-block fontification, marksman for hover/refs
+- =M-x jds/markdown-reading-mode= — toggle prose-friendly view:
+  hides =*=/=_=/=[]()= markup, switches to proportional font (code
+  stays monospace), centers a narrow column. Same again to leave.
+- =C-c C-c l= — toggle =markdown-live-preview-mode= (renders via
+  =pandoc -f gfm -t html5= and shows the result in a side EWW
+  buffer that refreshes as you type). Fully local — no server, no
+  token, no network.
+- =C-c C-c p= — one-shot preview in your default browser
+- =C-c C-c v= — export to file + open in browser
+- =toml-ts-mode= (=.toml=): taplo gives schema-aware diagnostics
+  (=pyproject.toml=, =Cargo.toml=)
+- =yaml-ts-mode= (=.yaml=/=.yml=): yaml-language-server validates
+  against schemas; pinned to 2-space indent
+- =C-c C-c= in pandoc-mode — convert/export via Pandoc
+
 ** Projects (built-in project.el — replaces projectile)
 
 The new prefix is =C-x p=. Bindings to remember:
@@ -187,6 +226,12 @@ Built-in workspaces; tabs are *window configurations*, not buffers.
   C-k= compile buffer, =C-c C-c= compile defun
 - =M-x ielm= — Emacs Lisp REPL (built-in)
 
+** Learning the stack
+
+- =M-x jds/tip= — pop a random tip drawn from THIS cheatsheet. Also
+  auto-fires once on Emacs startup (small window; =q= to dismiss).
+  Add a bullet here → it's in the rotation next time.
+
 ** Misc
 
 - =<f9>= — ibuffer
@@ -247,9 +292,13 @@ easier.
 
 ** Starting up
 
-Get early-init going, if not using emacs 27+
+First line of the tangled =init.el= must declare lexical binding so
+closures (lambdas in process sentinels, hooks, etc.) capture their
+enclosing locals. Then load =early-init.el= for Emacs <27 (no-op on
+modern Emacs since early-init runs on its own).
 
 #+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 #+end_src
 
@@ -265,6 +314,85 @@ Auto-tangle this file on save so I never have to remember =C-c C-v t=.
         (org-babel-tangle))))
 
   (add-hook 'after-save-hook #'jds/tangle-jds-config-on-save)
+#+end_src
+
+Tip-of-the-day from the =* Cheatsheet= section above. On every Emacs
+startup, =jds/tip= parses the bullets in =* Cheatsheet=, picks one at
+random, and pops a small =*emacs-tip*= window. Use =M-x jds/tip= any
+time to draw another. Hit =q= to dismiss the window.
+
+This is gamification by way of your own notes: every tip is something
+your config already supports, drawn from a section you maintain.
+
+#+begin_src emacs-lisp
+  (defvar jds/cheatsheet-file
+    (expand-file-name "jds-config.org" user-emacs-directory)
+    "Source file for `jds/tip'; expects a top-level `* Cheatsheet' heading.")
+
+  (defun jds/cheatsheet-bullets ()
+    "Return bulleted items from the `* Cheatsheet' section as strings.
+  Multi-line bullets are joined with spaces; sub-bullets are folded
+  into their parent. Returns nil if the section can't be found."
+    (when (file-readable-p jds/cheatsheet-file)
+      (with-temp-buffer
+        (insert-file-contents jds/cheatsheet-file)
+        (goto-char (point-min))
+        (when (re-search-forward "^\\* Cheatsheet" nil t)
+          (let (bullets current)
+            (cl-flet ((flush ()
+                        (when current
+                          (push (mapconcat #'identity
+                                           (nreverse current) " ")
+                                bullets)
+                          (setq current nil))))
+              (forward-line 1)
+              (catch 'done
+                (while (not (eobp))
+                  (let ((line (buffer-substring-no-properties
+                               (line-beginning-position)
+                               (line-end-position))))
+                    (cond
+                     ((string-match "\\`\\* " line)   ; next top-level
+                      (flush) (throw 'done nil))
+                     ((string-match "\\`- " line)     ; new bullet
+                      (flush)
+                      (setq current (list (substring line 2))))
+                     ((and current (string-match "\\`[ \t]" line))
+                      (push (string-trim line) current))
+                     ((string-empty-p (string-trim line))
+                      (flush))
+                     (t (flush))))
+                  (forward-line 1))
+                (flush)))
+            (nreverse bullets))))))
+
+  (defun jds/tip ()
+    "Show a random tip drawn from the `* Cheatsheet' section."
+    (interactive)
+    (let ((bullets (jds/cheatsheet-bullets)))
+      (if (null bullets)
+          (message "jds/tip: no cheatsheet bullets found in %s"
+                   jds/cheatsheet-file)
+        (let ((tip (nth (random (length bullets)) bullets)))
+          (with-current-buffer (get-buffer-create "*emacs-tip*")
+            (let ((inhibit-read-only t))
+              (erase-buffer)
+              (when (fboundp 'org-mode) (org-mode))
+              (insert "* Try this\n\n")
+              (insert "- " tip "\n\n")
+              (insert (format "/=M-x jds/tip= for another — %d tips total/\n"
+                              (length bullets)))
+              (goto-char (point-min))
+              (read-only-mode 1))
+            (display-buffer (current-buffer)
+                            '((display-buffer-pop-up-window)
+                              (window-height . 14))))))))
+
+  ;; Show a tip on startup, briefly after Emacs is idle so it doesn't
+  ;; race the startup sequence.
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (run-with-idle-timer 2 nil #'jds/tip)))
 #+end_src
 
 #+BEGIN_SRC emacs-lisp
@@ -351,6 +479,55 @@ stay in their own sections below.
     (when (fboundp 'pixel-scroll-precision-mode)
       (pixel-scroll-precision-mode 1))
     (fset 'yes-or-no-p 'y-or-n-p))
+#+END_SRC
+
+**** macOS modifier mapping
+
+On macOS, remap both Command (⌘) and Option (⌥) to Meta. Don't care
+about preserving Super — never use it. We set both =ns-*= (vanilla
+GNU Emacs on macOS) and =mac-*= (the Yamamoto =mac= port) so this
+works regardless of which build is installed.
+
+Trade-off: Option no longer produces accented characters (⌥-a → å).
+If you ever need them, switch to one of:
+
+- =M-x insert-char RET= and pick by Unicode name (vertico-friendly)
+- =C-x 8 RET= prefix for common diacritics
+
+#+BEGIN_SRC emacs-lisp
+  (when (eq system-type 'darwin)
+    (setq ns-command-modifier  'meta
+          mac-command-modifier 'meta
+          ns-option-modifier   'meta
+          mac-option-modifier  'meta))
+#+END_SRC
+
+**** Inherit shell PATH (macOS GUI, Linux GUI, daemon mode)
+
+Any time Emacs is launched outside a login shell — Finder/Dock on
+macOS, GNOME/KDE/Sway launchers on Linux, =emacs --daemon=, systemd
+units — it inherits a minimal PATH that misses =/opt/homebrew/bin=,
+=~/.local/bin=, =~/.cargo/bin=, etc. =exec-path-from-shell= runs
+your login shell once and copies its environment in. Fixes
+=executable-find= for basedpyright, ruff, taplo, pandoc, anything
+installed by =uv tool=, =pipx=, =cargo install=, =npm -g=, your
+distro's user-bin location.
+
+Window system check covers macOS (=ns=, =mac=), X11 (=x=), Wayland
+(=pgtk= and =pure-gtk= when Emacs is built with =--with-pgtk=), and
+daemon launches where =window-system= is nil at init time.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package exec-path-from-shell
+    :straight t
+    :if (or (memq window-system '(mac ns x pgtk pure-gtk))
+            (daemonp))
+    :config
+    (dolist (var '("PATH"
+                   "MANPATH"
+                   "GITHUB_TOKEN"))
+      (add-to-list 'exec-path-from-shell-variables var))
+    (exec-path-from-shell-initialize))
 #+END_SRC
 
 ** General configuration
@@ -1607,13 +1784,156 @@ output format changes.
         fortran-line-length 200)
 #+end_src
 *** Markdown
+
+=markdown-mode= is mature and battle-tested (still preferred over the
+treesit variant). =markdown-fontify-code-blocks-natively= turns on
+syntax highlighting inside fenced code blocks using the appropriate
+major mode. =marksman= is a fast LSP for cross-document refs / wiki
+links — useful in docs-heavy projects. Install:
+
+- macOS: =brew install marksman=
+- Linux: grab the static binary from
+  https://github.com/artempyanykh/marksman/releases and drop it on
+  =$PATH= (no distro packages I'm aware of).
+
 #+begin_src emacs-lisp
-  (use-package pandoc-mode
-    :straight t)
   (use-package markdown-mode
     :straight t
-    :init (progn
-	    (add-hook 'markdown-mode-hook 'pandoc-mode)))
+    :mode (("\\.md\\'"       . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :hook ((markdown-mode . pandoc-mode)
+           (markdown-mode . visual-line-mode))
+    :custom
+    (markdown-fontify-code-blocks-natively t)
+    (markdown-header-scaling t)
+    (markdown-hide-urls nil))
+
+  (use-package pandoc-mode
+    :straight t)
+
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '(markdown-mode . ("marksman"))))
+#+end_src
+
+**** Reading mode for prose
+
+A single toggle that combines:
+
+- =markdown-toggle-markup-hiding= — hide =*=, =_=, =[]()= so headings,
+  bold, italics, and links show clean
+- =mixed-pitch-mode= — proportional font for prose, monospace stays
+  on code blocks and inline =verbatim=
+- =olivetti-mode= — centered narrow column (~80ch) for comfortable
+  line length
+
+=M-x jds/markdown-reading-mode= flips between the two states. Pairs
+with the existing =visual-line-mode= (soft wrap) for a clean reading
+view without leaving Emacs.
+
+#+begin_src emacs-lisp
+  (use-package olivetti
+    :straight t
+    :custom (olivetti-body-width 80))
+
+  (use-package mixed-pitch
+    :straight t
+    :config
+    ;; Keep tables, code blocks, inline code, and anything else
+    ;; alignment-sensitive in monospace, even with mixed-pitch on.
+    (dolist (face '(markdown-table-face
+                    markdown-code-face
+                    markdown-inline-code-face
+                    markdown-pre-face
+                    markdown-language-keyword-face
+                    markdown-language-info-face
+                    markdown-url-face))
+      (add-to-list 'mixed-pitch-fixed-pitch-faces face)))
+
+  (define-minor-mode jds/markdown-reading-mode
+    "Toggle prose-friendly rendering for a markdown buffer."
+    :lighter " 📖"
+    (if jds/markdown-reading-mode
+        (progn
+          (markdown-toggle-markup-hiding 1)
+          (mixed-pitch-mode 1)
+          (olivetti-mode 1))
+      (markdown-toggle-markup-hiding -1)
+      (mixed-pitch-mode -1)
+      (olivetti-mode -1)))
+#+end_src
+
+**** Live preview via pandoc (built into markdown-mode)
+
+=markdown-mode= has =markdown-live-preview-mode= built in: it renders
+the buffer with whatever shell command =markdown-command= names and
+shows the result in a side-window EWW buffer. The preview
+auto-refreshes as you type. Fully local, no server, no tokens, no
+external service.
+
+We point =markdown-command= at =pandoc= with GitHub-flavored markdown
+input and HTML5 output. Install pandoc:
+
+- macOS: =brew install pandoc=
+- Debian/Ubuntu: =sudo apt install pandoc=
+- Fedora/RHEL: =sudo dnf install pandoc=
+- Arch: =sudo pacman -S pandoc=
+
+- =C-c C-c l= — toggle =markdown-live-preview-mode= (live EWW buffer)
+- =C-c C-c p= — one-shot =markdown-preview= (opens once in default
+  browser; doesn't refresh)
+- =C-c C-c v= — =markdown-export-and-preview= (export to file, open
+  in browser)
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'markdown-mode
+    (setq markdown-command "pandoc -f gfm -t html5 --standalone"))
+#+end_src
+
+*** TOML
+
+Tree-sitter-backed mode comes from =toml-ts-mode= (built-in; grammar
+auto-installed by =treesit-auto=). =taplo= is the LSP — formatter +
+schema-aware validation (it knows =pyproject.toml=,
+=Cargo.toml=, etc.). Install:
+
+- macOS: =brew install taplo=
+- Cross-platform: =cargo install taplo-cli --features lsp= (needs
+  Rust toolchain), or download a release binary from
+  https://github.com/tamasfe/taplo/releases
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '(toml-ts-mode . ("taplo" "lsp" "stdio"))))
+
+  (add-hook 'toml-ts-mode-hook #'eglot-ensure)
+#+end_src
+
+*** YAML
+
+=yaml-ts-mode= (built-in; grammar via =treesit-auto=). The LSP is
+=yaml-language-server= (Red Hat), which understands K8s manifests,
+GitHub Actions, GitLab CI, JSON Schema, and a bunch of others.
+Install:
+
+- macOS: =brew install yaml-language-server=
+- Cross-platform: =npm install -g yaml-language-server= (needs
+  Node), or grab a release from
+  https://github.com/redhat-developer/yaml-language-server/releases
+
+YAML is whitespace-sensitive so we also pin indentation explicitly.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '(yaml-ts-mode . ("yaml-language-server" "--stdio"))))
+
+  (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+  (add-hook 'yaml-ts-mode-hook
+            (lambda ()
+              (setq-local tab-width 2
+                          yaml-indent-offset 2)))
 #+end_src
 *** C programming
 
@@ -1646,12 +1966,19 @@ need to run once — use =with-eval-after-load= instead of a hook.
 #+end_src
 
 *** PlantUML
+
+Locate the =plantuml= binary on PATH (works on macOS Homebrew at
+=/opt/homebrew/bin=, Linux distros at =/usr/bin=, manual installs in
+=~/.local/bin=, etc.). Falls back to the bare command name so
+plantuml-mode can still error usefully if it's not installed.
+
 #+begin_src emacs-lisp
   (use-package plantuml-mode
     :straight t
-    :init (progn
-	    (setq plantuml-executable-path "/usr/bin/plantuml")
-	    (setq plantuml-default-exec-mode 'executable)))
+    :init
+    (setq plantuml-executable-path (or (executable-find "plantuml")
+                                       "plantuml")
+          plantuml-default-exec-mode 'executable))
 #+end_src
 
 *** Lua

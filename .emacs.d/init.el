@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t; -*-
 (require 'early-init (expand-file-name "early-init" user-emacs-directory))
 
 (defun jds/tangle-jds-config-on-save ()
@@ -9,6 +10,75 @@
       (org-babel-tangle))))
 
 (add-hook 'after-save-hook #'jds/tangle-jds-config-on-save)
+
+(defvar jds/cheatsheet-file
+  (expand-file-name "jds-config.org" user-emacs-directory)
+  "Source file for `jds/tip'; expects a top-level `* Cheatsheet' heading.")
+
+(defun jds/cheatsheet-bullets ()
+  "Return bulleted items from the `* Cheatsheet' section as strings.
+Multi-line bullets are joined with spaces; sub-bullets are folded
+into their parent. Returns nil if the section can't be found."
+  (when (file-readable-p jds/cheatsheet-file)
+    (with-temp-buffer
+      (insert-file-contents jds/cheatsheet-file)
+      (goto-char (point-min))
+      (when (re-search-forward "^\\* Cheatsheet" nil t)
+        (let (bullets current)
+          (cl-flet ((flush ()
+                      (when current
+                        (push (mapconcat #'identity
+                                         (nreverse current) " ")
+                              bullets)
+                        (setq current nil))))
+            (forward-line 1)
+            (catch 'done
+              (while (not (eobp))
+                (let ((line (buffer-substring-no-properties
+                             (line-beginning-position)
+                             (line-end-position))))
+                  (cond
+                   ((string-match "\\`\\* " line)   ; next top-level
+                    (flush) (throw 'done nil))
+                   ((string-match "\\`- " line)     ; new bullet
+                    (flush)
+                    (setq current (list (substring line 2))))
+                   ((and current (string-match "\\`[ \t]" line))
+                    (push (string-trim line) current))
+                   ((string-empty-p (string-trim line))
+                    (flush))
+                   (t (flush))))
+                (forward-line 1))
+              (flush)))
+          (nreverse bullets))))))
+
+(defun jds/tip ()
+  "Show a random tip drawn from the `* Cheatsheet' section."
+  (interactive)
+  (let ((bullets (jds/cheatsheet-bullets)))
+    (if (null bullets)
+        (message "jds/tip: no cheatsheet bullets found in %s"
+                 jds/cheatsheet-file)
+      (let ((tip (nth (random (length bullets)) bullets)))
+        (with-current-buffer (get-buffer-create "*emacs-tip*")
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (when (fboundp 'org-mode) (org-mode))
+            (insert "* Try this\n\n")
+            (insert "- " tip "\n\n")
+            (insert (format "/=M-x jds/tip= for another — %d tips total/\n"
+                            (length bullets)))
+            (goto-char (point-min))
+            (read-only-mode 1))
+          (display-buffer (current-buffer)
+                          '((display-buffer-pop-up-window)
+                            (window-height . 14))))))))
+
+;; Show a tip on startup, briefly after Emacs is idle so it doesn't
+;; race the startup sequence.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (run-with-idle-timer 2 nil #'jds/tip)))
 
 (straight-use-package 'use-package)
 
@@ -65,6 +135,22 @@
   (when (fboundp 'pixel-scroll-precision-mode)
     (pixel-scroll-precision-mode 1))
   (fset 'yes-or-no-p 'y-or-n-p))
+
+(when (eq system-type 'darwin)
+  (setq ns-command-modifier  'meta
+        mac-command-modifier 'meta
+        ns-option-modifier   'meta
+        mac-option-modifier  'meta))
+
+(use-package exec-path-from-shell
+  :straight t
+  :if (memq window-system '(mac ns x))
+  :config
+  (dolist (var '("PATH"
+                 "MANPATH"
+                 "GITHUB_TOKEN"))
+    (add-to-list 'exec-path-from-shell-variables var))
+  (exec-path-from-shell-initialize))
 
 (use-package hydra
 :straight t)
@@ -1015,12 +1101,72 @@ With prefix arg, re-check even if already reported this session."
 (setq fortran-comment-region "!"
       fortran-line-length 200)
 
-(use-package pandoc-mode
-  :straight t)
 (use-package markdown-mode
   :straight t
-  :init (progn
-    (add-hook 'markdown-mode-hook 'pandoc-mode)))
+  :mode (("\\.md\\'"       . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :hook ((markdown-mode . pandoc-mode)
+         (markdown-mode . visual-line-mode))
+  :custom
+  (markdown-fontify-code-blocks-natively t)
+  (markdown-header-scaling t)
+  (markdown-hide-urls nil))
+
+(use-package pandoc-mode
+  :straight t)
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '(markdown-mode . ("marksman"))))
+
+(use-package olivetti
+  :straight t
+  :custom (olivetti-body-width 80))
+
+(use-package mixed-pitch
+  :straight t
+  :config
+  ;; Keep tables, code blocks, inline code, and anything else
+  ;; alignment-sensitive in monospace, even with mixed-pitch on.
+  (dolist (face '(markdown-table-face
+                  markdown-code-face
+                  markdown-inline-code-face
+                  markdown-pre-face
+                  markdown-language-keyword-face
+                  markdown-language-info-face
+                  markdown-url-face))
+    (add-to-list 'mixed-pitch-fixed-pitch-faces face)))
+
+(define-minor-mode jds/markdown-reading-mode
+  "Toggle prose-friendly rendering for a markdown buffer."
+  :lighter " 📖"
+  (if jds/markdown-reading-mode
+      (progn
+        (markdown-toggle-markup-hiding 1)
+        (mixed-pitch-mode 1)
+        (olivetti-mode 1))
+    (markdown-toggle-markup-hiding -1)
+    (mixed-pitch-mode -1)
+    (olivetti-mode -1)))
+
+(with-eval-after-load 'markdown-mode
+  (setq markdown-command "pandoc -f gfm -t html5 --standalone"))
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '(toml-ts-mode . ("taplo" "lsp" "stdio"))))
+
+(add-hook 'toml-ts-mode-hook #'eglot-ensure)
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '(yaml-ts-mode . ("yaml-language-server" "--stdio"))))
+
+(add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+(add-hook 'yaml-ts-mode-hook
+          (lambda ()
+            (setq-local tab-width 2
+                        yaml-indent-offset 2)))
 
 (add-hook 'c-mode-hook #'eglot-ensure)
 (add-hook 'c++-mode-hook #'eglot-ensure)
